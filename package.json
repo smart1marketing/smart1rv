@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "suite:fields:dry": "SUITE_FIELD_DRY_RUN=true node scripts/createSuiteFields.js",
+    "suite:fields:create": "SUITE_FIELD_DRY_RUN=false node scripts/createSuiteFields.js"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -335,3 +335,29 @@ For `month_by_month_plan`, store the full JSON or convert it to a long text fiel
 - Use `ALLOWED_ORIGINS` after testing to reduce unwanted external submissions.
 - Add captcha or honeypot protection if spam becomes an issue.
 - Add server-side rate limiting if the page is publicly promoted.
+
+## Bulk create Smart 1 Suite custom fields
+
+This repo now includes an optional one-time field creation utility for Smart 1 Suite / HighLevel.
+
+Files:
+
+```text
+scripts/createSuiteFields.js
+fields/smart1rv-custom-fields.json
+SUITE_FIELD_SETUP_RENDER.md
+```
+
+Dry run:
+
+```bash
+npm run suite:fields:dry
+```
+
+Create fields:
+
+```bash
+npm run suite:fields:create
+```
+
+Read `SUITE_FIELD_SETUP_RENDER.md` before running this in Render.
