@@ -13,6 +13,8 @@
     </div>
 
     <form id="rvDemandForm">
+      <input name="primary_goal" type="hidden" value="All sales, trade-ins, financing, service appointments, and seasonal maintenance">
+      <input name="main_service_opportunity" type="hidden" value="Full RV demand package: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
       <section class="srv-step active" data-step="1">
         <p class="eyebrow">Smart RV Demand Package</p>
         <h2>Let’s Build Your Weather-Triggered RV Demand Plan</h2>
@@ -69,25 +71,9 @@
       </section>
 
       <section class="srv-step" data-step="4">
-        <p class="eyebrow">Campaign Focus</p>
-        <h2>What do you want the campaign to drive?</h2>
-        <select name="primary_goal" required>
-          <option value="">Primary Goal</option>
-          <option>New RV sales</option>
-          <option>Used RV sales</option>
-          <option>Trade-ins</option>
-          <option>Service appointments</option>
-          <option>All of the above</option>
-        </select>
-        <select name="main_service_opportunity" required>
-          <option value="">Main Service Opportunity</option>
-          <option>De-winterization</option>
-          <option>Winterization</option>
-          <option>A/C service</option>
-          <option>Roof/seal inspection</option>
-          <option>General RV service</option>
-          <option>Not sure</option>
-        </select>
+        <p class="eyebrow">Package Preference</p>
+        <h2>Choose your Climate Safeguard Fund.</h2>
+        <p class="helper">We’ll assume the campaign supports the full RV demand funnel: new and used RV sales, trade-ins, financing, service appointments, and seasonal maintenance.</p>
         <select name="package_level" required>
           <option value="">Preferred Package Level</option>
           <option value="$3,500/month Climate Safeguard Fund">$3,500/month Climate Safeguard Fund</option>

@@ -55,21 +55,109 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString();
 }
 
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function chips(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return `<div class="srv-chips">${list.map(item => `<span class="srv-chip">${escapeHtml(item)}</span>`).join('')}</div>`;
+}
+
+// Builds the full on-screen report shown before the proposal step.
+function buildReportHtml(estimate) {
+  const dealership = (getFormPayload().dealership_name || 'your dealership').trim();
+
+  const region = estimate.market_climate_region
+    ? `
+      <div class="srv-report-section srv-region">
+        <span class="srv-region-badge">${escapeHtml(estimate.market_climate_region)}</span>
+        ${estimate.market_region_reason ? `<p>${escapeHtml(estimate.market_region_reason)}</p>` : ''}
+      </div>`
+    : '';
+
+  const stats = `
+    <div class="srv-stat-grid">
+      <div class="srv-stat">
+        <span class="opportunity-number">${formatNumber(estimate.campground_count_low)}–${formatNumber(estimate.campground_count_high)}</span>
+        <span class="srv-stat-label">campgrounds &amp; RV parks</span>
+      </div>
+      <div class="srv-stat">
+        <span class="opportunity-number">${formatNumber(estimate.estimated_site_count_low)}–${formatNumber(estimate.estimated_site_count_high)}</span>
+        <span class="srv-stat-label">estimated RV / camping sites</span>
+      </div>
+      <div class="srv-stat">
+        <span class="opportunity-number">${formatNumber(estimate.estimated_peak_season_reach_low)}–${formatNumber(estimate.estimated_peak_season_reach_high)}</span>
+        <span class="srv-stat-label">estimated peak-season camper reach</span>
+      </div>
+    </div>`;
+
+  const summary = estimate.dealer_summary
+    ? `<div class="srv-report-section"><h3>Your Market Opportunity</h3><p>${escapeHtml(estimate.dealer_summary)}</p></div>`
+    : '';
+
+  const pkg = estimate.recommended_package
+    ? `
+      <div class="srv-report-section srv-package">
+        <h3>Recommended Package</h3>
+        <p class="srv-package-name">${escapeHtml(estimate.recommended_package)}</p>
+        ${estimate.recommended_package_reason ? `<p>${escapeHtml(estimate.recommended_package_reason)}</p>` : ''}
+      </div>`
+    : '';
+
+  const channels = (Array.isArray(estimate.recommended_channels) && estimate.recommended_channels.length)
+    ? `<div class="srv-report-section"><h3>Recommended Media Channels</h3>${chips(estimate.recommended_channels)}</div>`
+    : '';
+
+  const triggers = (Array.isArray(estimate.best_weather_triggers) && estimate.best_weather_triggers.length)
+    ? `<div class="srv-report-section"><h3>Best Weather Triggers for Your Market</h3>${chips(estimate.best_weather_triggers)}</div>`
+    : '';
+
+  let plan = '';
+  if (Array.isArray(estimate.month_by_month_plan) && estimate.month_by_month_plan.length) {
+    const rows = estimate.month_by_month_plan.map(row => `
+      <tr>
+        <td class="srv-plan-month">${escapeHtml(row.month)}</td>
+        <td>
+          <strong>${escapeHtml(row.campaign_focus)}</strong>
+          <div class="srv-plan-message">${escapeHtml(row.recommended_message)}</div>
+          ${chips(row.weather_triggers)}
+        </td>
+      </tr>`).join('');
+    plan = `
+      <div class="srv-report-section">
+        <h3>Month-by-Month Campaign Plan</h3>
+        <table class="srv-plan-table">
+          <thead><tr><th>Month</th><th>Focus &amp; Triggers</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  const disclaimer = estimate.estimate_disclaimer
+    ? `<p class="disclaimer">${escapeHtml(estimate.estimate_disclaimer)}</p>`
+    : '';
+
+  return `
+    <p class="srv-report-intro">Based on ${escapeHtml(dealership)}’s location, selected buyer radius, and regional campground density, here’s your weather-triggered RV demand opportunity:</p>
+    ${region}
+    ${stats}
+    ${summary}
+    ${pkg}
+    ${channels}
+    ${triggers}
+    ${plan}
+    ${disclaimer}
+  `;
+}
+
 function renderEstimate(estimate) {
   const box = document.getElementById('marketOpportunityResult');
-
-  box.innerHTML = `
-    <p>Based on your dealership location, selected buyer radius, and regional campground density, your market may include approximately:</p>
-
-    <p><span class="opportunity-number">${formatNumber(estimate.campground_count_low)}–${formatNumber(estimate.campground_count_high)}</span><br>campgrounds and RV parks</p>
-
-    <p><span class="opportunity-number">${formatNumber(estimate.estimated_site_count_low)}–${formatNumber(estimate.estimated_site_count_high)}</span><br>estimated RV/camping sites</p>
-
-    <p><span class="opportunity-number">${formatNumber(estimate.estimated_peak_season_reach_low)}–${formatNumber(estimate.estimated_peak_season_reach_high)}</span><br>estimated peak-season camper reach</p>
-
-    <p>${estimate.dealer_summary}</p>
-    <p class="disclaimer">${estimate.estimate_disclaimer}</p>
-  `;
+  box.innerHTML = buildReportHtml(estimate);
 }
 
 async function estimateAndSubmit() {
@@ -129,7 +217,7 @@ buildButton.addEventListener('click', async () => {
   } catch (error) {
     document.getElementById('marketOpportunityResult').innerHTML = `
       <p>We could not complete the automated estimate right now.</p>
-      <p>Your team can still review the form details manually. Error: ${error.message}</p>
+      <p>Your team can still review the form details manually. Error: ${escapeHtml(error.message)}</p>
     `;
     console.error(error);
   } finally {

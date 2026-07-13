@@ -143,7 +143,7 @@ Click **Create Web Service**. Render will install dependencies and start the app
 After deploy, open:
 
 ```txt
-https://YOUR-RENDER-SERVICE.onrender.com/health
+https://smart1rv.onrender.com/health
 ```
 
 You should see:
@@ -161,7 +161,7 @@ You should see:
 Open:
 
 ```txt
-https://YOUR-RENDER-SERVICE.onrender.com
+https://smart1rv.onrender.com
 ```
 
 Fill out the form and confirm the lead arrives in Smart 1 Suite.
@@ -196,7 +196,7 @@ This is the easiest version.
 
 ```html
 <iframe
-  src="https://YOUR-RENDER-SERVICE.onrender.com"
+  src="https://smart1rv.onrender.com"
   style="width:100%; min-height:1050px; border:0;"
   loading="lazy">
 </iframe>
@@ -221,9 +221,9 @@ Before the script, set your Render API base:
 
 ```html
 <script>
-  window.SMART1RV_API_BASE = "https://YOUR-RENDER-SERVICE.onrender.com";
+  window.SMART1RV_API_BASE = "https://smart1rv.onrender.com";
 </script>
-<script src="https://YOUR-RENDER-SERVICE.onrender.com/script.js"></script>
+<script src="https://smart1rv.onrender.com/script.js"></script>
 ```
 
 Make sure `ALLOWED_ORIGINS` in Render includes the Smart 1 Sites domain.

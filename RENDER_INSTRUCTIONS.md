@@ -68,7 +68,7 @@ npm start
 Open:
 
 ```txt
-https://YOUR-RENDER-SERVICE.onrender.com/health
+https://smart1rv.onrender.com/health
 ```
 
 Expected response:
@@ -86,7 +86,7 @@ Expected response:
 Open:
 
 ```txt
-https://YOUR-RENDER-SERVICE.onrender.com
+https://smart1rv.onrender.com
 ```
 
 Complete the form and confirm the lead arrives in Smart 1 Suite.
@@ -99,7 +99,7 @@ Use an iframe:
 
 ```html
 <iframe
-  src="https://YOUR-RENDER-SERVICE.onrender.com"
+  src="https://smart1rv.onrender.com"
   style="width:100%; min-height:1050px; border:0;"
   loading="lazy">
 </iframe>
@@ -111,9 +111,9 @@ If you paste the form directly into a Smart 1 Sites custom code block, add this 
 
 ```html
 <script>
-  window.SMART1RV_API_BASE = "https://YOUR-RENDER-SERVICE.onrender.com";
+  window.SMART1RV_API_BASE = "https://smart1rv.onrender.com";
 </script>
-<script src="https://YOUR-RENDER-SERVICE.onrender.com/script.js"></script>
+<script src="https://smart1rv.onrender.com/script.js"></script>
 ```
 
 Then set `ALLOWED_ORIGINS` in Render to your Smart 1 Sites domain.
