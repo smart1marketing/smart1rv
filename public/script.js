@@ -2,6 +2,16 @@
 // set this to your Render service URL, for example: https://smart1rv.onrender.com
 const API_BASE = window.SMART1RV_API_BASE || '';
 
+// All weather triggers are assumed. The dealer no longer picks these — Smart 1 recommends
+// the best set for their market. The full list is sent so the AI can prioritize.
+const ALL_WEATHER_TRIGGERS = [
+  'First 50°–60° forecast', '60°+ forecast', '70°+ weekend', 'Sunny weekend', 'Holiday weekend forecast',
+  'Heavy rain', 'Thunderstorms', 'High wind', 'Severe storm watch',
+  '85°+ forecast', '90°+ heat', 'Heat advisory', 'Heat index 100°+',
+  'First frost', 'Freeze warning', 'Snow forecast', 'Cold snap under 45°',
+  'Tropical storm or hurricane watch', 'Snowbird season'
+];
+
 const form = document.getElementById('rvDemandForm');
 const steps = document.querySelectorAll('.srv-step');
 const progressBar = document.getElementById('srvProgressBar');
@@ -39,9 +49,8 @@ function getFormPayload() {
   const data = new FormData(form);
   const payload = Object.fromEntries(data.entries());
 
-  payload.weather_triggers = Array.from(
-    document.querySelectorAll('input[name="weather_triggers"]:checked')
-  ).map(item => item.value);
+  // Assume all weather triggers.
+  payload.weather_triggers = ALL_WEATHER_TRIGGERS.slice();
 
   payload.proposal_recipient_email =
     payload.proposal_recipient === 'other' && payload.alternate_email
@@ -114,7 +123,7 @@ function buildReportHtml(estimate) {
     : '';
 
   const triggers = (Array.isArray(estimate.best_weather_triggers) && estimate.best_weather_triggers.length)
-    ? `<div class="srv-report-section"><h3>Best Weather Triggers for Your Market</h3>${chips(estimate.best_weather_triggers)}</div>`
+    ? `<div class="srv-report-section"><h3>Recommended Weather Triggers for Your Market</h3>${chips(estimate.best_weather_triggers)}</div>`
     : '';
 
   let plan = '';
@@ -198,13 +207,8 @@ proposalRecipient.addEventListener('change', () => {
 buildButton.addEventListener('click', async () => {
   if (!validateCurrentStep()) return;
 
-  const selectedTriggers = document.querySelectorAll('input[name="weather_triggers"]:checked');
-  if (selectedTriggers.length === 0) {
-    alert('Please choose at least one weather trigger.');
-    return;
-  }
-
-  showStep(6);
+  // Advance to the results step (all triggers/goals are assumed — nothing to pick).
+  showStep(4);
   buildButton.disabled = true;
 
   document.getElementById('marketOpportunityResult').innerHTML = '<p>Building your campground market estimate and sending your lead into Smart 1 Suite...</p>';

@@ -13,12 +13,14 @@
     </div>
 
     <form id="rvDemandForm">
-      <input name="primary_goal" type="hidden" value="All sales, trade-ins, financing, service appointments, and seasonal maintenance">
-      <input name="main_service_opportunity" type="hidden" value="Full RV demand package: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
+      <!-- All sales + service goals are assumed. All weather triggers are assumed. The package is recommended for the dealer. -->
+      <input name="primary_goal" type="hidden" value="All RV sales goals: new RV sales, used RV sales, trade-ins, and financing">
+      <input name="main_service_opportunity" type="hidden" value="All RV service goals: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
+
       <section class="srv-step active" data-step="1">
         <p class="eyebrow">Smart RV Demand Package</p>
         <h2>Let’s Build Your Weather-Triggered RV Demand Plan</h2>
-        <p class="helper">Answer a few quick questions and we’ll estimate your campground market opportunity.</p>
+        <p class="helper">Answer a few quick questions and we’ll estimate your campground market opportunity and recommend your plan.</p>
         <input name="dealership_name" placeholder="Dealership Name" required />
         <input name="contact_name" placeholder="Contact Name" required />
         <input name="email" type="email" placeholder="Email Address" required />
@@ -40,8 +42,9 @@
       </section>
 
       <section class="srv-step" data-step="3">
-        <p class="eyebrow">Geography</p>
+        <p class="eyebrow">Website + Geography</p>
         <h2>How far do customers travel to you?</h2>
+        <p class="helper">We’ll assume the full RV demand funnel — all sales, trade-ins, financing, service, and seasonal maintenance — and recommend the right weather triggers and package for you.</p>
         <input name="website_url" type="url" placeholder="Dealership Website URL" required />
         <select name="sales_radius_miles" required>
           <option value="">How far do customers travel to buy from you?</option>
@@ -64,23 +67,6 @@
           <option value="No">No</option>
           <option value="Yes">Yes</option>
         </select>
-        <div class="button-row">
-          <button type="button" class="prev-btn">Back</button>
-          <button type="button" class="next-btn">Continue</button>
-        </div>
-      </section>
-
-      <section class="srv-step" data-step="4">
-        <p class="eyebrow">Package Preference</p>
-        <h2>Choose your Climate Safeguard Fund.</h2>
-        <p class="helper">We’ll assume the campaign supports the full RV demand funnel: new and used RV sales, trade-ins, financing, service appointments, and seasonal maintenance.</p>
-        <select name="package_level" required>
-          <option value="">Preferred Package Level</option>
-          <option value="$3,500/month Climate Safeguard Fund">$3,500/month Climate Safeguard Fund</option>
-          <option value="$5,000/month Climate Safeguard Fund">$5,000/month Climate Safeguard Fund</option>
-          <option value="$7,500/month Climate Safeguard Fund">$7,500/month Climate Safeguard Fund</option>
-          <option value="Help me choose">Help me choose</option>
-        </select>
         <select name="preferred_start" required>
           <option value="">When would you like to start?</option>
           <option>Next month</option>
@@ -90,34 +76,11 @@
         </select>
         <div class="button-row">
           <button type="button" class="prev-btn">Back</button>
-          <button type="button" class="next-btn">Continue</button>
-        </div>
-      </section>
-
-      <section class="srv-step" data-step="5">
-        <p class="eyebrow">Weather Triggers</p>
-        <h2>Choose the weather moments that should activate your campaign.</h2>
-        <div class="checkbox-grid">
-          <label><input type="checkbox" name="weather_triggers" value="60+ forecast" /> 60°+ forecast</label>
-          <label><input type="checkbox" name="weather_triggers" value="70+ weekend" /> 70°+ weekend</label>
-          <label><input type="checkbox" name="weather_triggers" value="Sunny weekend" /> Sunny weekend</label>
-          <label><input type="checkbox" name="weather_triggers" value="Holiday weekend forecast" /> Holiday weekend forecast</label>
-          <label><input type="checkbox" name="weather_triggers" value="Heavy rain" /> Heavy rain</label>
-          <label><input type="checkbox" name="weather_triggers" value="Thunderstorms" /> Thunderstorms</label>
-          <label><input type="checkbox" name="weather_triggers" value="High wind" /> High wind</label>
-          <label><input type="checkbox" name="weather_triggers" value="85+ forecast" /> 85°+ forecast</label>
-          <label><input type="checkbox" name="weather_triggers" value="Heat advisory" /> Heat advisory</label>
-          <label><input type="checkbox" name="weather_triggers" value="First frost" /> First frost</label>
-          <label><input type="checkbox" name="weather_triggers" value="Freeze warning" /> Freeze warning</label>
-          <label><input type="checkbox" name="weather_triggers" value="Snow forecast" /> Snow forecast</label>
-        </div>
-        <div class="button-row">
-          <button type="button" class="prev-btn">Back</button>
           <button type="button" id="buildOpportunityBtn">Build My Market Estimate</button>
         </div>
       </section>
 
-      <section class="srv-step" data-step="6">
+      <section class="srv-step" data-step="4">
         <p class="eyebrow">Market Estimate</p>
         <h2>Your Smart RV Demand Market Estimate</h2>
         <div id="marketOpportunityResult" class="opportunity-card">
@@ -129,7 +92,7 @@
         </div>
       </section>
 
-      <section class="srv-step" data-step="7">
+      <section class="srv-step" data-step="5">
         <p class="eyebrow">Proposal Request</p>
         <h2>Send My Smart RV Demand Proposal Request</h2>
         <select name="proposal_recipient" id="proposalRecipient" required>

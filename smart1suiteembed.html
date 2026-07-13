@@ -4,27 +4,29 @@ Paste this entire file into a Smart 1 Suite / Smart 1 Sites HTML code block.
 
 IMPORTANT:
 1. API_BASE is already set to https://smart1rv.onrender.com (your live Render service).
-2. In Render, temporarily set ALLOWED_ORIGINS=* while testing, then lock it to your domain.
+2. In Render, set ALLOWED_ORIGINS to the domain this form is embedded on, OR leave it BLANK
+   to allow all origins while testing. (You can also use "*".) A wrong ALLOWED_ORIGINS value
+   is the usual cause of a "Failed to fetch" error in the browser.
 3. This version uses inline display styles so only one step appears at a time inside Smart 1 code blocks.
-4. After the dealer answers the questions, Step 6 now shows the FULL market report on screen
-   (climate region, headline numbers, recommended package, channels, best triggers, dealer summary,
-   and the month-by-month plan) before continuing to the proposal request.
+4. The dealer does NOT choose weather triggers or a package. All sales + service goals and all
+   weather triggers are assumed, and Smart 1 recommends the best package. Step 4 shows the full
+   market report on screen before continuing to the proposal request.
 -->
 
 <div id="smart1rv-widget" class="smart1rv-widget">
   <div class="smart1rv-card">
     <div class="smart1rv-progress-wrap" aria-hidden="true">
-      <div class="smart1rv-progress-bar" id="smart1rvProgressBar" style="width:14%;"></div>
+      <div class="smart1rv-progress-bar" id="smart1rvProgressBar" style="width:20%;"></div>
     </div>
 
     <form id="smart1rvForm">
-      <input name="primary_goal" type="hidden" value="All sales, trade-ins, financing, service, and seasonal maintenance">
-      <input name="main_service_opportunity" type="hidden" value="Full RV demand package: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
+      <input name="primary_goal" type="hidden" value="All RV sales goals: new RV sales, used RV sales, trade-ins, and financing">
+      <input name="main_service_opportunity" type="hidden" value="All RV service goals: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
       <!-- Step 1 -->
       <div class="smart1rv-step" data-step="1" style="display:block;">
         <p class="smart1rv-eyebrow">Smart RV Demand Package</p>
         <h2>Let’s Build Your RV Demand Plan</h2>
-        <p class="smart1rv-helper">Answer a few quick questions. We’ll estimate your weather-triggered campground market opportunity.</p>
+        <p class="smart1rv-helper">Answer a few quick questions. We’ll estimate your weather-triggered campground market opportunity and recommend your plan.</p>
 
         <label>Dealership Name
           <input name="dealership_name" placeholder="Example RV Center" required>
@@ -72,6 +74,7 @@ IMPORTANT:
       <div class="smart1rv-step" data-step="3" style="display:none;">
         <p class="smart1rv-eyebrow">Website + Geography</p>
         <h2>How far do customers travel to you?</h2>
+        <p class="smart1rv-helper">We’ll assume the full RV demand funnel — all sales, trade-ins, financing, service, and seasonal maintenance — and recommend the right weather triggers and package for you.</p>
 
         <label>Dealership Website URL
           <input name="website_url" type="url" placeholder="https://yourdealership.com" required>
@@ -103,29 +106,7 @@ IMPORTANT:
             <option value="Yes">Yes</option>
           </select>
         </label>
-
-        <div class="smart1rv-actions">
-          <button type="button" class="smart1rv-back">Back</button>
-          <button type="button" class="smart1rv-next">Continue</button>
-        </div>
-      </div>
-
-      <!-- Step 4 -->
-      <div class="smart1rv-step" data-step="4" style="display:none;">
-        <p class="smart1rv-eyebrow">Package Preference</p>
-        <h2>Choose your Climate Safeguard Fund.</h2>
-        <p class="smart1rv-helper">We’ll assume the campaign should support the full RV demand funnel: new and used RV sales, trade-ins, financing, service appointments, and seasonal maintenance.</p>
-
-        <label>Preferred Package Level
-          <select name="package_level" required>
-            <option value="">Select package</option>
-            <option value="$3,500/month Climate Safeguard Fund">$3,500/month Climate Safeguard Fund</option>
-            <option value="$5,000/month Climate Safeguard Fund">$5,000/month Climate Safeguard Fund</option>
-            <option value="$7,500/month Climate Safeguard Fund">$7,500/month Climate Safeguard Fund</option>
-            <option value="Help me choose">Help me choose</option>
-          </select>
-        </label>
-        <label>Preferred Start
+        <label>When would you like to start?
           <select name="preferred_start" required>
             <option value="">Select timing</option>
             <option>Next month</option>
@@ -137,48 +118,12 @@ IMPORTANT:
 
         <div class="smart1rv-actions">
           <button type="button" class="smart1rv-back">Back</button>
-          <button type="button" class="smart1rv-next">Continue</button>
-        </div>
-      </div>
-
-      <!-- Step 5 -->
-      <div class="smart1rv-step" data-step="5" style="display:none;">
-        <p class="smart1rv-eyebrow">Weather Triggers</p>
-        <h2>Choose the weather moments that should activate your ads.</h2>
-        <p class="smart1rv-helper">Choose at least one trigger. These will be used to build the estimate and proposal plan.</p>
-
-        <fieldset class="smart1rv-fieldset">
-          <legend>Warm Weather Triggers</legend>
-          <label><input type="checkbox" name="weather_triggers" value="60+ forecast"> 60°+ forecast</label>
-          <label><input type="checkbox" name="weather_triggers" value="70+ weekend"> 70°+ weekend</label>
-          <label><input type="checkbox" name="weather_triggers" value="Sunny weekend"> Sunny weekend</label>
-          <label><input type="checkbox" name="weather_triggers" value="Holiday weekend forecast"> Holiday weekend forecast</label>
-        </fieldset>
-
-        <fieldset class="smart1rv-fieldset">
-          <legend>Rain / Storm Triggers</legend>
-          <label><input type="checkbox" name="weather_triggers" value="Heavy rain"> Heavy rain</label>
-          <label><input type="checkbox" name="weather_triggers" value="Thunderstorms"> Thunderstorms</label>
-          <label><input type="checkbox" name="weather_triggers" value="High wind"> High wind</label>
-          <label><input type="checkbox" name="weather_triggers" value="Severe storm watch"> Severe storm watch</label>
-        </fieldset>
-
-        <fieldset class="smart1rv-fieldset">
-          <legend>Heat / Cold Triggers</legend>
-          <label><input type="checkbox" name="weather_triggers" value="85+ forecast"> 85°+ forecast</label>
-          <label><input type="checkbox" name="weather_triggers" value="Heat advisory"> Heat advisory</label>
-          <label><input type="checkbox" name="weather_triggers" value="First frost"> First frost</label>
-          <label><input type="checkbox" name="weather_triggers" value="Freeze warning"> Freeze warning</label>
-        </fieldset>
-
-        <div class="smart1rv-actions">
-          <button type="button" class="smart1rv-back">Back</button>
           <button type="button" id="smart1rvBuildEstimate">Build My Market Estimate</button>
         </div>
       </div>
 
-      <!-- Step 6 -->
-      <div class="smart1rv-step" data-step="6" style="display:none;">
+      <!-- Step 4 -->
+      <div class="smart1rv-step" data-step="4" style="display:none;">
         <p class="smart1rv-eyebrow">Market Estimate</p>
         <h2>Your Smart RV Demand Market Estimate</h2>
 
@@ -192,8 +137,8 @@ IMPORTANT:
         </div>
       </div>
 
-      <!-- Step 7 -->
-      <div class="smart1rv-step" data-step="7" style="display:none;">
+      <!-- Step 5 -->
+      <div class="smart1rv-step" data-step="5" style="display:none;">
         <p class="smart1rv-eyebrow">Proposal Request</p>
         <h2>Send My Smart RV Demand Proposal Request</h2>
 
@@ -245,10 +190,6 @@ IMPORTANT:
   #smart1rv-widget .smart1rv-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
   #smart1rv-widget .smart1rv-progress-wrap { width:100%; background:#edf0f5; border-radius:999px; margin-bottom:28px; overflow:hidden; }
   #smart1rv-widget .smart1rv-progress-bar { height:9px; background:#1A2E58; transition:width .25s ease; }
-  #smart1rv-widget .smart1rv-fieldset { border:1px solid #dce4f2; border-radius:14px; padding:16px; margin:0 0 16px; background:#f9fbff; }
-  #smart1rv-widget .smart1rv-fieldset legend { color:#1A2E58; font-weight:800; padding:0 8px; }
-  #smart1rv-widget .smart1rv-fieldset label { color:#172033; font-weight:400; margin:10px 0; }
-  #smart1rv-widget .smart1rv-fieldset input { width:auto; margin:0 8px 0 0; }
   #smart1rv-widget .smart1rv-estimate-card { background:#f5f8ff; border:1px solid #dce4f2; padding:22px; border-radius:14px; margin-bottom:18px; }
   #smart1rv-widget .smart1rv-estimate-card p { line-height:1.55; }
   #smart1rv-widget .smart1rv-number { display:inline-block; color:#1A2E58; font-size:clamp(22px,3.4vw,30px); font-weight:800; }
@@ -284,6 +225,16 @@ IMPORTANT:
 (function () {
   // Live Render service URL for smart1rv.
   const API_BASE = 'https://smart1rv.onrender.com';
+
+  // All weather triggers are assumed. The dealer no longer picks these — Smart 1 recommends
+  // the best set for their market. The full list is sent so the AI can prioritize.
+  const ALL_WEATHER_TRIGGERS = [
+    'First 50°–60° forecast', '60°+ forecast', '70°+ weekend', 'Sunny weekend', 'Holiday weekend forecast',
+    'Heavy rain', 'Thunderstorms', 'High wind', 'Severe storm watch',
+    '85°+ forecast', '90°+ heat', 'Heat advisory', 'Heat index 100°+',
+    'First frost', 'Freeze warning', 'Snow forecast', 'Cold snap under 45°',
+    'Tropical storm or hurricane watch', 'Snowbird season'
+  ];
 
   const widget = document.getElementById('smart1rv-widget');
   const form = document.getElementById('smart1rvForm');
@@ -325,7 +276,7 @@ IMPORTANT:
   function getPayload() {
     const data = new FormData(form);
     const payload = Object.fromEntries(data.entries());
-    payload.weather_triggers = Array.from(widget.querySelectorAll('input[name="weather_triggers"]:checked')).map(function (item) { return item.value; });
+    payload.weather_triggers = ALL_WEATHER_TRIGGERS.slice();
     payload.selected_weather_triggers_text = payload.weather_triggers.join(', ');
     payload.proposal_recipient_email = payload.proposal_recipient === 'other' && payload.alternate_email ? payload.alternate_email : payload.email;
     payload.form_page_url = window.location.href;
@@ -380,7 +331,7 @@ IMPORTANT:
       : '';
 
     const triggers = (Array.isArray(estimate.best_weather_triggers) && estimate.best_weather_triggers.length)
-      ? '<div class="smart1rv-section"><h3>Best Weather Triggers for Your Market</h3>' + chips(estimate.best_weather_triggers) + '</div>'
+      ? '<div class="smart1rv-section"><h3>Recommended Weather Triggers for Your Market</h3>' + chips(estimate.best_weather_triggers) + '</div>'
       : '';
 
     let plan = '';
@@ -449,13 +400,8 @@ IMPORTANT:
   buildButton.addEventListener('click', async function () {
     if (!validateCurrentStep()) return;
 
-    const selectedTriggers = widget.querySelectorAll('input[name="weather_triggers"]:checked');
-    if (selectedTriggers.length === 0) {
-      alert('Please choose at least one weather trigger.');
-      return;
-    }
-
-    showStep(6);
+    // Advance to the results step (all triggers/goals are assumed — nothing to pick).
+    showStep(4);
     buildButton.disabled = true;
     estimateBox.innerHTML = '<p>Building your campground market estimate and sending your lead into Smart 1 Suite...</p>';
 

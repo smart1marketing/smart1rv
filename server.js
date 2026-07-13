@@ -11,12 +11,19 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map(origin => origin.trim())
   .filter(Boolean);
 
+const allowAllOrigins = allowedOrigins.length === 0 || allowedOrigins.includes('*');
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    // Allow non-browser requests (no Origin header), a blank ALLOWED_ORIGINS,
+    // an explicit "*" wildcard, or an exact origin match.
+    if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Do NOT throw here — throwing skips CORS headers and the browser reports a
+    // generic "Failed to fetch". Instead, deny the CORS headers gracefully so the
+    // request still returns a normal (blocked) response we can diagnose.
+    return callback(null, false);
   }
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -86,13 +93,14 @@ ZIP: ${payload.zip}
 Website: ${payload.website_url}
 Sales Radius: ${payload.sales_radius_miles} miles
 Service Radius: ${payload.service_radius_miles} miles
-Assumed Campaign Objectives: ${payload.primary_goal}
-Assumed Service Opportunities: ${payload.main_service_opportunity}
-Package Level: ${payload.package_level}
-Selected Weather Triggers: ${payload.weather_triggers.join(', ')}
+Assumed Campaign Objectives (assume ALL of these): ${payload.primary_goal}
+Assumed Service Opportunities (assume ALL of these): ${payload.main_service_opportunity}
+Available Weather Triggers (assume the dealer wants ALL relevant triggers on the table): ${payload.weather_triggers.join(', ')}
 Campaign start assumption: Start next month, ${nextMonthName}.
 
-Return conservative-to-strong marketing ranges. Do not claim exact counts. Use ranges. Assume the dealer wants the full RV demand package; do not ask the dealer to narrow the campaign to only one sales or service objective.
+The dealer has NOT chosen a monthly package. YOU must recommend the best fit from these three levels based on market size and estimated opportunity: "$3,500/month Climate Safeguard Fund" (Starter), "$5,000/month Climate Safeguard Fund" (Growth), or "$7,500/month Climate Safeguard Fund" (Premium). Put your choice in recommended_package and explain it in recommended_package_reason.
+
+Return conservative-to-strong marketing ranges. Do not claim exact counts. Use ranges. Assume the dealer wants the full RV demand package covering all sales and all service goals; do not ask the dealer to narrow the campaign to only one sales or service objective.
 
 First, classify the dealer into ONE climate/market region based on state and ZIP, using this framework:
 - "Southern / Coastal Year-Round RV Market" (FL, AL, TX, LA, GA, NC, SC, MS): heat, rain, storms, hurricane prep, snowbirds, year-round sales.
