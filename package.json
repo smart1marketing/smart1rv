@@ -1,25 +1,22 @@
 {
-  "name": "smart1rv",
+  "name": "smart1ski",
   "version": "1.0.0",
-  "description": "Smart RV Demand Package estimator and Smart 1 Suite webhook submitter.",
-  "main": "src/server.js",
-  "type": "module",
+  "private": true,
+  "description": "Smart 1 Marketing ski resort targeting and weather-trigger campaign planner",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "suite:fields:dry": "SUITE_FIELD_DRY_RUN=true node scripts/createSuiteFields.js",
-    "suite:fields:create": "SUITE_FIELD_DRY_RUN=false node scripts/createSuiteFields.js"
+    "test": "node test/pipeline.test.js && node test/ui.test.js"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "openai": "^4.77.0"
+    "express": "^4.21.2"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
 }

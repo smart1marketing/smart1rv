@@ -1,313 +1,247 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import OpenAI from 'openai';
+"use strict";
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const crypto = require("crypto");
+
+const geo = require("./lib/geo");
+const weather = require("./lib/weather");
+const audienceModel = require("./lib/audience");
+const reportModel = require("./lib/report");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
+const ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
-
-const allowAllOrigins = allowedOrigins.length === 0 || allowedOrigins.includes('*');
-
-app.use(cors({
-  origin(origin, callback) {
-    // Allow non-browser requests (no Origin header), a blank ALLOWED_ORIGINS,
-    // an explicit "*" wildcard, or an exact origin match.
-    if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // Do NOT throw here — throwing skips CORS headers and the browser reports a
-    // generic "Failed to fetch". Instead, deny the CORS headers gracefully so the
-    // request still returns a normal (blocked) response we can diagnose.
-    return callback(null, false);
-  }
-}));
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static('public'));
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const requiredEnv = ['OPENAI_API_KEY', 'SMART1_SUITE_WEBHOOK_URL'];
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    console.warn(`Missing environment variable: ${key}`);
-  }
+if (ORIGIN === "*") {
+  console.warn(
+    "[smart1ski] ALLOWED_ORIGIN is '*'. Any site can post to this API. " +
+    "Set it to the exact origin that embeds the form before you launch."
+  );
+}
+if (!process.env.SMART1_WEBHOOK_URL) {
+  console.warn("[smart1ski] SMART1_WEBHOOK_URL is not set. Reports will build, but no leads will be created.");
 }
 
-const currentMonthIndex = new Date().getMonth();
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-const nextMonthName = monthNames[(currentMonthIndex + 1) % 12];
+app.set("trust proxy", 1); // Render sits behind a proxy; needed for a real req.ip
+app.use(cors({ origin: ORIGIN }));
+app.use(express.json({ limit: "256kb" }));
+app.use(express.urlencoded({ extended: true, limit: "256kb" }));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h" }));
 
-function normalizeFormPayload(body) {
-  const triggers = Array.isArray(body.weather_triggers)
-    ? body.weather_triggers
-    : String(body.weather_triggers || '')
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean);
+const num = (v, f = 0) => (Number.isFinite(Number(v)) && String(v).trim() !== "" ? Number(v) : f);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+/* ------------------------------------------------------------ abuse guards */
+/* This form is an unauthenticated public door into the CRM. Without these,
+   one person with a script fills the pipeline with four hundred fake
+   opportunities and the sales team stops trusting the tool. */
+
+const LIMITS = {
+  PER_WINDOW: 5,
+  WINDOW_MS: 15 * 60 * 1000,
+  PER_DAY: 20,
+  DAY_MS: 24 * 60 * 60 * 1000,
+  MIN_FORM_SECONDS: 5,
+  DEDUPE_MS: 10 * 60 * 1000
+};
+
+const hits = new Map();     // ip -> timestamps
+const recent = new Map();   // fingerprint -> { at, response }
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, stamps] of hits) {
+    const kept = stamps.filter((t) => now - t < LIMITS.DAY_MS);
+    if (kept.length) hits.set(ip, kept); else hits.delete(ip);
+  }
+  for (const [key, entry] of recent) {
+    if (now - entry.at > LIMITS.DEDUPE_MS) recent.delete(key);
+  }
+}, 5 * 60 * 1000).unref();
+
+function rateLimited(ip) {
+  const now = Date.now();
+  const stamps = (hits.get(ip) || []).filter((t) => now - t < LIMITS.DAY_MS);
+  const inWindow = stamps.filter((t) => now - t < LIMITS.WINDOW_MS).length;
+
+  if (inWindow >= LIMITS.PER_WINDOW) return "Too many submissions from this address. Wait a few minutes and try again.";
+  if (stamps.length >= LIMITS.PER_DAY) return "Daily submission limit reached for this address.";
+
+  stamps.push(now);
+  hits.set(ip, stamps);
+  return null;
+}
+
+function looksAutomated(body) {
+  // A hidden field no human can see. If it is filled, it was not filled by a person.
+  if (String(body.company_website || "").trim()) return "Submission rejected.";
+
+  // A human cannot read seven sections and type a resort name in three seconds.
+  const started = num(body.form_started_at, 0);
+  if (started > 0) {
+    const seconds = (Date.now() - started) / 1000;
+    if (seconds < LIMITS.MIN_FORM_SECONDS) return "Submission rejected.";
+    if (seconds > 12 * 60 * 60) return "This form has been open too long. Reload the page and try again.";
+  }
+  return null;
+}
+
+function fingerprint(body) {
+  return crypto
+    .createHash("sha256")
+    .update(`${String(body.contact_email || "").toLowerCase()}|${body.zip_code}|${body.monthly_budget}`)
+    .digest("hex");
+}
+
+/* ------------------------------------------------------------- validation */
+
+function validate(body) {
+  const required = ["resort_name", "zip_code", "contact_name", "contact_email"];
+  const missing = required.filter((k) => !String(body[k] || "").trim());
+  if (missing.length) return `Missing required fields: ${missing.join(", ")}`;
+
+  if (!/^\d{5}(-\d{4})?$/.test(String(body.zip_code).trim())) return "Enter a valid U.S. ZIP code.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(body.contact_email).trim())) return "Enter a valid email address.";
+
+  const start = num(body.season_start_month, 11);
+  const end = num(body.season_end_month, 3);
+  if (start < 1 || start > 12 || end < 1 || end > 12) return "Select a valid season start and end month.";
+
+  const budget = num(body.monthly_budget, 6000);
+  if (budget < 2500 || budget > 100000) return "Enter a monthly budget between $2,500 and $100,000.";
+
+  const base = num(body.base_elevation_ft, 0);
+  const summit = num(body.summit_elevation_ft, 0);
+  if (base && (base < 0 || base > 15000)) return "Enter a base elevation between 0 and 15,000 feet.";
+  if (summit && base && summit < base) return "The summit elevation cannot be below the base elevation.";
+
+  return null;
+}
+
+/* ---------------------------------------------------------------- webhook */
+
+async function relayWebhook(payload) {
+  const webhook = process.env.SMART1_WEBHOOK_URL;
+  if (!webhook) return { configured: false, delivered: false };
+
+  const response = await fetch(webhook, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10000)
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Smart 1 Suite webhook returned ${response.status}: ${text.slice(0, 180)}`);
+  }
+  return { configured: true, delivered: true, status: response.status };
+}
+
+function suitePayload(body, report) {
+  const { company_website, form_started_at, ...clean } = body;
   return {
-    dealership_name: body.dealership_name || '',
-    contact_name: body.contact_name || '',
-    email: body.email || '',
-    phone: body.phone || '',
-    proposal_recipient_email: body.proposal_recipient_email || body.alternate_email || body.email || '',
-    address: body.address || '',
-    city: body.city || '',
-    state: body.state || '',
-    zip: body.zip || '',
-    website_url: body.website_url || '',
-    sales_radius_miles: body.sales_radius_miles || '',
-    service_radius_miles: body.service_radius_miles || '',
-    multiple_locations: body.multiple_locations || '',
-    primary_goal: body.primary_goal || 'All sales, trade-ins, financing, service appointments, and seasonal maintenance',
-    main_service_opportunity: body.main_service_opportunity || 'Full RV demand package: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance',
-    package_level: body.package_level || '',
-    preferred_start: body.preferred_start || '',
-    weather_triggers: triggers,
-    review_request: body.review_request || '',
-    notes: body.notes || '',
-    estimate_type: 'AI-generated planning estimate'
+    ...clean,
+    source: "Smart 1 Ski Resort Package",
+    report_json: JSON.stringify(report),
+    weather_marketing_readiness_score: report.weather_marketing_readiness_score,
+    weather_marketing_readiness_band: report.weather_marketing_readiness.band,
+    estimated_targeted_skiing_households: report.audience.estimated_targeted_skiing_households,
+    estimated_targetable_pool: report.audience.broad_skiing_households,
+    estimated_budget_protected: report.savings_model.estimated_budget_protected,
+    estimated_budget_protected_percent: report.savings_model.estimated_budget_protected_percent,
+    recommended_monthly_budget: report.budget_plan.budget,
+    resort_location_resolved: report.resort.location,
+    media_lead_days: report.climate.media_lead_days,
+    forecast_activation_days: report.outlook ? report.outlook.activation_days : null,
+    generated_at: report.generated_at
   };
 }
 
-function buildPrompt(payload) {
-  return `
-You are helping Smart 1 Marketing estimate campground and RV park market opportunity for an RV dealer advertising proposal.
+/* ------------------------------------------------------------------ routes */
 
-This is not an exact database lookup. Create a reasonable marketing planning estimate based on the dealer's city, state, ZIP code, sales radius, service radius, regional density, tourism/camping patterns, and typical campground/RV park distribution.
+app.get("/health", (_req, res) =>
+  res.json({
+    ok: true,
+    service: "smart1ski",
+    webhook_configured: Boolean(process.env.SMART1_WEBHOOK_URL),
+    origin_locked: ORIGIN !== "*"
+  })
+);
 
-Dealer inputs:
-Dealership Name: ${payload.dealership_name}
-Address: ${payload.address}
-City: ${payload.city}
-State: ${payload.state}
-ZIP: ${payload.zip}
-Website: ${payload.website_url}
-Sales Radius: ${payload.sales_radius_miles} miles
-Service Radius: ${payload.service_radius_miles} miles
-Assumed Campaign Objectives (assume ALL of these): ${payload.primary_goal}
-Assumed Service Opportunities (assume ALL of these): ${payload.main_service_opportunity}
-Available Weather Triggers (assume the dealer wants ALL relevant triggers on the table): ${payload.weather_triggers.join(', ')}
-Campaign start assumption: Start next month, ${nextMonthName}.
-
-The dealer has NOT chosen a monthly package. YOU must recommend the best fit from these three levels based on market size and estimated opportunity: "$3,500/month Climate Safeguard Fund" (Starter), "$5,000/month Climate Safeguard Fund" (Growth), or "$7,500/month Climate Safeguard Fund" (Premium). Put your choice in recommended_package and explain it in recommended_package_reason.
-
-Return conservative-to-strong marketing ranges. Do not claim exact counts. Use ranges. Assume the dealer wants the full RV demand package covering all sales and all service goals; do not ask the dealer to narrow the campaign to only one sales or service objective.
-
-First, classify the dealer into ONE climate/market region based on state and ZIP, using this framework:
-- "Southern / Coastal Year-Round RV Market" (FL, AL, TX, LA, GA, NC, SC, MS): heat, rain, storms, hurricane prep, snowbirds, year-round sales.
-- "Northern / Seasonal RV Market" (OH, MI, IN, IL, PA, NY, WI, MN): spring opening, summer camping, fall service, winterization.
-- "Desert / Southwest RV Market" (AZ, NM, NV, west TX, southern CA): extreme heat, mild winter camping, dust/wind, monsoon storms.
-- "Mountain / Four-Season RV Market" (CO, UT, ID, MT, WY): spring thaw, summer camping, fall trips, snow/freeze prep.
-- "Pacific Northwest / Rain-Influenced RV Market" (WA, OR, northern CA): rain breaks, sunny weekends, roof/seal inspections, moisture protection.
-If the state does not clearly fit, choose the closest region and briefly explain why in the region reason.
-
-Then estimate:
-1. Approximate number of campgrounds/RV parks in the sales radius.
-2. Approximate total camping/RV sites in the sales radius.
-3. Approximate peak-season camper reach.
-4. Suggested seasonal campaign plan starting next month.
-5. Recommended Smart RV Demand package.
-6. Best weather triggers for this dealer, tuned to the region above.
-7. A short sales summary written for the dealer.
-
-Use these assumptions unless local context strongly suggests otherwise:
-- Average campground/RV park site count: 75–125 sites.
-- Seasonal camper share: 35%–45%.
-- Transient/daily-weekly camper share: 55%–65%.
-- Average people per occupied campsite: 2.4.
-- Peak-season transient turnover: 8–12 stays per site.
-- Peak season generally runs spring through fall, adjusted by the dealer’s geography (year-round for southern/coastal and desert markets).
-- The estimate should be useful for marketing planning, not presented as an audited count.
-`;
-}
-
-const estimateSchema = {
-  name: 'smart_rv_demand_estimate',
-  schema: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      estimate_disclaimer: { type: 'string' },
-      market_climate_region: { type: 'string' },
-      market_region_reason: { type: 'string' },
-      campground_count_low: { type: 'number' },
-      campground_count_high: { type: 'number' },
-      estimated_site_count_low: { type: 'number' },
-      estimated_site_count_high: { type: 'number' },
-      estimated_peak_season_reach_low: { type: 'number' },
-      estimated_peak_season_reach_high: { type: 'number' },
-      seasonal_share_assumption: { type: 'string' },
-      transient_share_assumption: { type: 'string' },
-      peak_season_assumption: { type: 'string' },
-      recommended_package: { type: 'string' },
-      recommended_package_reason: { type: 'string' },
-      recommended_channels: { type: 'array', items: { type: 'string' } },
-      best_weather_triggers: { type: 'array', items: { type: 'string' } },
-      dealer_summary: { type: 'string' },
-      month_by_month_plan: {
-        type: 'array',
-        minItems: 6,
-        maxItems: 12,
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          properties: {
-            month: { type: 'string' },
-            campaign_focus: { type: 'string' },
-            recommended_message: { type: 'string' },
-            weather_triggers: { type: 'array', items: { type: 'string' } }
-          },
-          required: ['month', 'campaign_focus', 'recommended_message', 'weather_triggers']
-        }
-      }
-    },
-    required: [
-      'estimate_disclaimer',
-      'market_climate_region',
-      'market_region_reason',
-      'campground_count_low',
-      'campground_count_high',
-      'estimated_site_count_low',
-      'estimated_site_count_high',
-      'estimated_peak_season_reach_low',
-      'estimated_peak_season_reach_high',
-      'seasonal_share_assumption',
-      'transient_share_assumption',
-      'peak_season_assumption',
-      'recommended_package',
-      'recommended_package_reason',
-      'recommended_channels',
-      'best_weather_triggers',
-      'dealer_summary',
-      'month_by_month_plan'
-    ]
-  },
-  strict: true
-};
-
-function buildProposalSummaryText(payload, estimate) {
-  const triggers = (estimate.best_weather_triggers || []).join(', ');
-  const channels = (estimate.recommended_channels || []).join(', ');
-  return [
-    `Smart RV Demand Package for ${payload.dealership_name}`,
-    `Location: ${payload.city}, ${payload.state} ${payload.zip}`,
-    `Market Type: ${estimate.market_climate_region}`,
-    `Sales Radius: ${payload.sales_radius_miles} miles | Service Radius: ${payload.service_radius_miles} miles`,
-    `Estimated Campgrounds/RV Parks: ${estimate.campground_count_low}–${estimate.campground_count_high}`,
-    `Estimated RV/Camping Sites: ${estimate.estimated_site_count_low}–${estimate.estimated_site_count_high}`,
-    `Estimated Peak-Season Camper Reach: ${estimate.estimated_peak_season_reach_low}–${estimate.estimated_peak_season_reach_high}`,
-    `Recommended Package: ${estimate.recommended_package}`,
-    `Recommended Channels: ${channels}`,
-    `Best Weather Triggers: ${triggers}`,
-    '',
-    estimate.dealer_summary,
-    '',
-    estimate.estimate_disclaimer
-  ].join('\n');
-}
-
-function buildMonthByMonthText(estimate) {
-  return (estimate.month_by_month_plan || [])
-    .map(row => `${row.month}: ${row.campaign_focus} — ${row.recommended_message} [Triggers: ${(row.weather_triggers || []).join(', ')}]`)
-    .join('\n');
-}
-
-async function createOpenAIEstimate(payload) {
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: 'You are a marketing strategy estimator. Return only the requested JSON.' },
-      { role: 'user', content: buildPrompt(payload) }
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: estimateSchema
-    }
-  });
-
-  const content = completion.choices?.[0]?.message?.content;
-  if (!content) throw new Error('OpenAI returned no content');
-  return JSON.parse(content);
-}
-
-async function sendToSmart1Suite(payload) {
-  const response = await fetch(process.env.SMART1_SUITE_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Smart 1 Suite webhook failed: ${response.status} ${text}`);
-  }
-
-  return { status: response.status, body: text };
-}
-
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'smart1rv', timestamp: new Date().toISOString() });
-});
-
-app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
+app.post("/api/analyze", async (req, res) => {
   try {
-    const formData = normalizeFormPayload(req.body);
+    const body = req.body || {};
 
-    if (!formData.email || !formData.dealership_name || !formData.zip) {
-      return res.status(400).json({
+    const bot = looksAutomated(body);
+    if (bot) return res.status(400).json({ ok: false, error: bot });
+
+    const limited = rateLimited(req.ip || "unknown");
+    if (limited) return res.status(429).json({ ok: false, error: limited });
+
+    const invalid = validate(body);
+    if (invalid) return res.status(400).json({ ok: false, error: invalid });
+
+    // The same person clicking twice should not create two opportunities.
+    const key = fingerprint(body);
+    const seen = recent.get(key);
+    if (seen && Date.now() - seen.at < LIMITS.DEDUPE_MS) {
+      return res.json({ ...seen.response, deduplicated: true });
+    }
+
+    const site = await geo.resolveResort(body);
+    const makesSnow = String(body.snowmaking || "yes") !== "no";
+    const opts = {
+      startMonth: clamp(num(body.season_start_month, 11), 1, 12),
+      endMonth: clamp(num(body.season_end_month, 3), 1, 12),
+      makesSnow,
+      bookingWindow: body.booking_window
+    };
+
+    let climate;
+    try {
+      climate = await weather.history(site, opts);
+    } catch (err) {
+      return res.status(502).json({
         ok: false,
-        error: 'Missing required fields: dealership_name, email, and zip are required.'
+        error: "Historical weather could not be retrieved for this location, so no plan was built. Try again in a moment.",
+        details: err.message
       });
     }
 
-    const estimate = await createOpenAIEstimate(formData);
+    // The forecast is a bonus, not a dependency. Never fail the report over it.
+    let outlook = null;
+    try {
+      outlook = await weather.forecast(site, opts);
+    } catch (err) {
+      outlook = { unavailable: true, note: "The 16-day outlook could not be retrieved. The historical plan is unaffected." };
+    }
 
-    const suitePayload = {
-      source: 'Smart RV Demand Estimate Form',
-      lead_type: 'Smart RV Demand Package',
-      lead_status: 'New RV Demand Lead',
-      submitted_at: new Date().toISOString(),
-      ...formData,
-      selected_weather_triggers: formData.weather_triggers,
-      selected_weather_triggers_text: formData.weather_triggers.join(', '),
-      ...estimate,
-      // Text-friendly ranges for easy Smart 1 Suite document merge fields
-      campground_estimate_range: `${estimate.campground_count_low}–${estimate.campground_count_high} campgrounds and RV parks`,
-      estimated_site_range: `${estimate.estimated_site_count_low}–${estimate.estimated_site_count_high} estimated RV/camping sites`,
-      estimated_peak_season_reach_range: `${estimate.estimated_peak_season_reach_low}–${estimate.estimated_peak_season_reach_high} estimated peak-season camper reach`,
-      recommended_channels_text: (estimate.recommended_channels || []).join(', '),
-      best_weather_triggers_text: (estimate.best_weather_triggers || []).join(', '),
-      month_by_month_plan_text: buildMonthByMonthText(estimate),
-      proposal_summary_text: buildProposalSummaryText(formData, estimate)
-    };
+    const audience = await audienceModel.estimate(body, site);
+    const report = reportModel.build({ body, site, climate, audience, outlook });
 
-    const suiteResult = await sendToSmart1Suite(suitePayload);
+    let webhook = { configured: false, delivered: false };
+    try {
+      webhook = await relayWebhook(suitePayload(body, report));
+    } catch (err) {
+      // The plan still goes to the customer. Nobody is told a lead landed when it did not.
+      return res.status(502).json({
+        ok: false,
+        error: "The plan was built, but it could not be recorded in Smart 1 Suite. The lead was not created.",
+        details: err.message,
+        report
+      });
+    }
 
-    return res.json({
-      ok: true,
-      estimate,
-      suite_webhook_status: suiteResult.status
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      ok: false,
-      error: 'Estimate or webhook submission failed.',
-      detail: process.env.NODE_ENV === 'production' ? undefined : error.message
-    });
+    const response = { ok: true, webhook, report };
+    recent.set(key, { at: Date.now(), response });
+    res.json(response);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: err.message || "Unable to build the plan." });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`smart1rv running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Smart1Ski listening on port ${PORT} (origin: ${ORIGIN})`));
