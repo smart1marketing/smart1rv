@@ -128,7 +128,7 @@ IMPORTANT:
         <h2>Your Smart RV Demand Market Estimate</h2>
 
         <div id="smart1rvEstimateBox" class="smart1rv-estimate-card">
-          <p>Building your campground market estimate...</p>
+          <p>Calculating Marketing Conditions.</p>
         </div>
 
         <div class="smart1rv-actions">
@@ -213,10 +213,39 @@ IMPORTANT:
   #smart1rv-widget .smart1rv-plan-table td { padding:12px 10px; border-bottom:1px solid #dce4f2; vertical-align:top; line-height:1.5; }
   #smart1rv-widget .smart1rv-plan-month { font-weight:800; color:#1A2E58; white-space:nowrap; width:110px; }
   #smart1rv-widget .smart1rv-plan-message { color:#687386; font-size:14px; margin:4px 0 8px; }
+  #smart1rv-widget .smart1rv-plan-season { display:inline-block; margin-top:4px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#28477f; }
+  #smart1rv-widget .smart1rv-plan-budget { font-weight:800; color:#1A2E58; white-space:nowrap; text-align:right; }
+  #smart1rv-widget .smart1rv-budget-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:4px 0 10px; }
+  #smart1rv-widget .smart1rv-budget-tile { background:#fff; border:1px solid #dce4f2; border-radius:12px; padding:16px; text-align:center; }
+  #smart1rv-widget .smart1rv-budget-amount { display:block; color:#1A2E58; font-size:clamp(20px,3vw,26px); font-weight:800; }
+  #smart1rv-widget .smart1rv-budget-note { color:#687386; font-size:14px; line-height:1.5; }
+
+  /* Package details expander */
+  #smart1rv-widget .smart1rv-details-toggle { background:transparent; color:#28477f; border:1px solid #dce4f2; padding:10px 16px; border-radius:10px; font-size:14px; font-weight:700; margin-top:12px; width:auto; }
+  #smart1rv-widget .smart1rv-details-toggle:hover { background:#f5f8ff; color:#1A2E58; }
+  #smart1rv-widget .smart1rv-details { margin-top:16px; padding:18px; background:#fff; border:1px solid #dce4f2; border-radius:14px; }
+  #smart1rv-widget .smart1rv-details[hidden] { display:none; }
+  #smart1rv-widget .smart1rv-details h4 { color:#1A2E58; font-size:15px; margin:16px 0 8px; }
+  #smart1rv-widget .smart1rv-details h4:first-child { margin-top:0; }
+  #smart1rv-widget .smart1rv-detail-list { margin:6px 0 4px; padding-left:20px; }
+  #smart1rv-widget .smart1rv-detail-list li { line-height:1.5; margin-bottom:6px; }
+  #smart1rv-widget .smart1rv-tier-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:8px; }
+  #smart1rv-widget .smart1rv-tier { border:1px solid #dce4f2; border-radius:12px; padding:16px; background:#fff; }
+  #smart1rv-widget .smart1rv-tier-rec { border-color:#1A2E58; box-shadow:0 0 0 2px rgba(26,46,88,.12); }
+  #smart1rv-widget .smart1rv-tier-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  #smart1rv-widget .smart1rv-tier-name { font-weight:800; color:#1A2E58; text-transform:uppercase; letter-spacing:.04em; font-size:13px; }
+  #smart1rv-widget .smart1rv-tier-badge { background:#1A2E58; color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; border-radius:999px; }
+  #smart1rv-widget .smart1rv-tier-price { color:#1A2E58; font-size:22px; font-weight:800; }
+  #smart1rv-widget .smart1rv-tier-price span { font-size:13px; font-weight:600; color:#687386; }
+  #smart1rv-widget .smart1rv-tier-tagline { color:#687386; font-size:13px; line-height:1.45; margin:6px 0 8px; }
+  #smart1rv-widget .smart1rv-tier .smart1rv-detail-list li { font-size:13px; margin-bottom:4px; }
+  #smart1rv-widget .smart1rv-detail-fineprint { color:#687386; font-size:12px; line-height:1.5; margin-top:12px; }
 
   @media (max-width:680px) {
     #smart1rv-widget .smart1rv-card { margin:0; border-radius:0; padding:24px; }
     #smart1rv-widget .smart1rv-stat-grid { grid-template-columns:1fr; }
+    #smart1rv-widget .smart1rv-budget-grid { grid-template-columns:1fr; }
+    #smart1rv-widget .smart1rv-tier-grid { grid-template-columns:1fr; }
     #smart1rv-widget .smart1rv-plan-month { width:auto; }
   }
 </style>
@@ -300,6 +329,74 @@ IMPORTANT:
     }).join('') + '</div>';
   }
 
+  function money(value) {
+    return '$' + Number(value || 0).toLocaleString('en-US');
+  }
+
+  var PACKAGE_TIERS = [
+    { key: 'Starter', amount: 3500, tagline: 'Best for smaller or single-location markets testing weather-triggered demand.', includes: ['Core CTV, Streaming Radio & Targeted Display', 'Primary weather triggers for your region', 'Campground & state-park geotargeting'] },
+    { key: 'Growth', amount: 5000, tagline: 'Our most popular level — the full weather-triggered stack with strong peak-season weight.', includes: ['Everything in Starter', 'Podcasts + Location Look-Back Retargeting', 'Broader weather-trigger coverage', 'Higher share of voice in peak weeks'] },
+    { key: 'Premium', amount: 7500, tagline: 'Best for larger or multi-location dealers and competitive markets.', includes: ['Everything in Growth', 'Digital Out-of-Home (DOOH) at local bars, restaurants, gas & shopping', 'Maximum trigger coverage', 'Highest peak-season media weight'] }
+  ];
+
+  function packageBaseAmount(estimate) {
+    if (Number(estimate.base_monthly_budget) > 0) return Number(estimate.base_monthly_budget);
+    var m = String(estimate.recommended_package || '').replace(/,/g, '').match(/\$?\s*(\d{3,6})/);
+    return m ? Number(m[1]) : 5000;
+  }
+
+  function buildPackageDetails(estimate) {
+    var rec = packageBaseAmount(estimate);
+    var channels = Array.isArray(estimate.recommended_channels) ? estimate.recommended_channels : [];
+    var channelList = channels.length ? '<ul class="smart1rv-detail-list">' + channels.map(function (c) { return '<li>' + escapeHtml(c) + '</li>'; }).join('') + '</ul>' : '';
+
+    var tiers = PACKAGE_TIERS.map(function (t) {
+      var isRec = t.amount === rec;
+      return '<div class="smart1rv-tier' + (isRec ? ' smart1rv-tier-rec' : '') + '">' +
+        '<div class="smart1rv-tier-head"><span class="smart1rv-tier-name">' + escapeHtml(t.key) + '</span>' +
+        (isRec ? '<span class="smart1rv-tier-badge">Recommended</span>' : '') + '</div>' +
+        '<div class="smart1rv-tier-price">' + money(t.amount) + '<span>/month</span></div>' +
+        '<p class="smart1rv-tier-tagline">' + escapeHtml(t.tagline) + '</p>' +
+        '<ul class="smart1rv-detail-list">' + t.includes.map(function (i) { return '<li>' + escapeHtml(i) + '</li>'; }).join('') + '</ul>' +
+      '</div>';
+    }).join('');
+
+    return '<button type="button" class="smart1rv-details-toggle" id="smart1rvPkgDetailsToggle" aria-expanded="false" aria-controls="smart1rvPkgDetails">See package details</button>' +
+      '<div class="smart1rv-details" id="smart1rvPkgDetails" hidden>' +
+        '<h4>What’s included in your Climate Safeguard Fund</h4>' +
+        '<p>Your monthly fund runs weather-triggered advertising across the channels we recommend for your market:</p>' +
+        channelList +
+        '<ul class="smart1rv-detail-list">' +
+          '<li><strong>Weather-triggered activation</strong> — ads turn on when your selected weather conditions hit and pause when they don’t.</li>' +
+          '<li><strong>Campaign management &amp; optimization</strong> — Smart 1 builds, runs, and tunes the campaigns for you.</li>' +
+          '<li><strong>Reporting</strong> — track delivery and performance throughout the campaign.</li>' +
+          '<li><strong>Rollover protection</strong> — unused media from poor-weather windows rolls into the next month.</li>' +
+          '<li><strong>Off-season off-ramp</strong> — leftover peak-season budget can shift to winterization, spring prep, A/C or generator service campaigns, or carry 100% forward as credit.</li>' +
+        '</ul>' +
+        '<h4>Package levels</h4>' +
+        '<div class="smart1rv-tier-grid">' + tiers + '</div>' +
+        '<p class="smart1rv-detail-fineprint">All levels are month-to-month Climate Safeguard Fund subscriptions. Your recommended level is based on your market size and estimated opportunity — you can move up or down after a strategy review.</p>' +
+      '</div>';
+  }
+
+  function wirePackageDetails() {
+    var toggle = document.getElementById('smart1rvPkgDetailsToggle');
+    var details = document.getElementById('smart1rvPkgDetails');
+    if (!toggle || !details) return;
+    toggle.addEventListener('click', function () {
+      var isHidden = details.hasAttribute('hidden');
+      if (isHidden) {
+        details.removeAttribute('hidden');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.textContent = 'Hide package details';
+      } else {
+        details.setAttribute('hidden', '');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'See package details';
+      }
+    });
+  }
+
   function renderEstimate(estimate) {
     const dealership = (getPayload().dealership_name || 'your dealership').trim();
 
@@ -323,7 +420,8 @@ IMPORTANT:
 
     const pkg = estimate.recommended_package
       ? '<div class="smart1rv-section"><h3>Recommended Package</h3><p class="smart1rv-package-name">' + escapeHtml(estimate.recommended_package) + '</p>' +
-          (estimate.recommended_package_reason ? '<p>' + escapeHtml(estimate.recommended_package_reason) + '</p>' : '') + '</div>'
+          (estimate.recommended_package_reason ? '<p>' + escapeHtml(estimate.recommended_package_reason) + '</p>' : '') +
+          buildPackageDetails(estimate) + '</div>'
       : '';
 
     const channels = (Array.isArray(estimate.recommended_channels) && estimate.recommended_channels.length)
@@ -334,18 +432,31 @@ IMPORTANT:
       ? '<div class="smart1rv-section"><h3>Recommended Weather Triggers for Your Market</h3>' + chips(estimate.best_weather_triggers) + '</div>'
       : '';
 
+    const budget = estimate.base_monthly_budget_text
+      ? '<div class="smart1rv-section"><h3>Suggested Media Budget</h3>' +
+          '<div class="smart1rv-budget-grid">' +
+            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.base_monthly_budget_text) + '/mo</span><span class="smart1rv-stat-label">at peak demand</span></div>' +
+            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.average_monthly_budget_text || '') + '/mo</span><span class="smart1rv-stat-label">blended average</span></div>' +
+            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.suggested_budget_total_text || '') + '</span><span class="smart1rv-stat-label">plan total (' + escapeHtml(String(estimate.suggested_budget_months || '')) + ' months)</span></div>' +
+          '</div>' +
+          (estimate.budget_note ? '<p class="smart1rv-budget-note">' + escapeHtml(estimate.budget_note) + '</p>' : '') +
+        '</div>'
+      : '';
+
     let plan = '';
     if (Array.isArray(estimate.month_by_month_plan) && estimate.month_by_month_plan.length) {
       const rows = estimate.month_by_month_plan.map(function (row) {
+        const season = row.season ? '<div class="smart1rv-plan-season">' + escapeHtml(row.season) + '</div>' : '';
         return '<tr>' +
-          '<td class="smart1rv-plan-month">' + escapeHtml(row.month) + '</td>' +
+          '<td class="smart1rv-plan-month">' + escapeHtml(row.month) + season + '</td>' +
           '<td><strong>' + escapeHtml(row.campaign_focus) + '</strong>' +
           '<div class="smart1rv-plan-message">' + escapeHtml(row.recommended_message) + '</div>' +
           chips(row.weather_triggers) + '</td>' +
+          '<td class="smart1rv-plan-budget">' + escapeHtml(row.suggested_budget_text || '') + '</td>' +
         '</tr>';
       }).join('');
-      plan = '<div class="smart1rv-section"><h3>Month-by-Month Campaign Plan</h3>' +
-        '<table class="smart1rv-plan-table"><thead><tr><th>Month</th><th>Focus &amp; Triggers</th></tr></thead>' +
+      plan = '<div class="smart1rv-section"><h3>Month-by-Month Campaign Plan &amp; Budget</h3>' +
+        '<table class="smart1rv-plan-table"><thead><tr><th>Month</th><th>Focus &amp; Triggers</th><th>Budget</th></tr></thead>' +
         '<tbody>' + rows + '</tbody></table></div>';
     }
 
@@ -354,7 +465,8 @@ IMPORTANT:
 
     estimateBox.innerHTML =
       '<p class="smart1rv-report-intro">Based on ' + escapeHtml(dealership) + '’s location, selected buyer radius, and regional campground density, here’s your weather-triggered RV demand opportunity:</p>' +
-      region + stats + summary + pkg + channels + triggers + plan + disclaimer;
+      region + stats + summary + pkg + channels + triggers + budget + plan + disclaimer;
+    wirePackageDetails();
   }
 
   async function estimateAndSubmit() {
@@ -403,7 +515,7 @@ IMPORTANT:
     // Advance to the results step (all triggers/goals are assumed — nothing to pick).
     showStep(4);
     buildButton.disabled = true;
-    estimateBox.innerHTML = '<p>Building your campground market estimate and sending your lead into Smart 1 Suite...</p>';
+    estimateBox.innerHTML = '<p>Calculating Marketing Conditions.</p>';
 
     try {
       const result = await estimateAndSubmit();

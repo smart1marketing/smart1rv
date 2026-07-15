@@ -120,11 +120,13 @@ For recommended_channels, you MUST choose only from Smart 1 Marketing's actual m
 - "Digital Out-of-Home (DOOH)" at local bars, restaurants, gas stations, and shopping areas
 HARD RULE: Never recommend local newspapers, print, direct mail, terrestrial/broadcast radio, linear/broadcast TV, static billboards, or any channel not on the list above. Only the channels above are valid.
 
+For the month-by-month plan, label each month's "season" as exactly one of: "Peak", "Shoulder", or "Off-Season", based on the dealer's region and RV demand cycle. Peak = the dealer's strongest RV demand months; Shoulder = ramp-up/ramp-down months; Off-Season = the slowest demand months. Southern/coastal and desert markets are year-round, so they should have MORE Peak/Shoulder months and FEWER Off-Season months than northern markets. (The dollar budget for each month is calculated automatically from the recommended package and these season labels — spend is highest in Peak months and steps down in the Off-Season — so you only need to label the season correctly.)
+
 Then estimate:
 1. Approximate number of campgrounds/RV parks in the sales radius.
 2. Approximate total camping/RV sites in the sales radius.
 3. Approximate peak-season camper reach.
-4. Suggested seasonal campaign plan starting next month.
+4. Suggested seasonal campaign plan starting next month, with a season label on every month.
 5. Recommended Smart RV Demand package.
 6. Best weather triggers for this dealer, tuned to the region above.
 7. Recommended media channels, chosen ONLY from the Smart 1 menu above.
@@ -173,11 +175,12 @@ const estimateSchema = {
           additionalProperties: false,
           properties: {
             month: { type: 'string' },
+            season: { type: 'string', enum: ['Peak', 'Shoulder', 'Off-Season'] },
             campaign_focus: { type: 'string' },
             recommended_message: { type: 'string' },
             weather_triggers: { type: 'array', items: { type: 'string' } }
           },
-          required: ['month', 'campaign_focus', 'recommended_message', 'weather_triggers']
+          required: ['month', 'season', 'campaign_focus', 'recommended_message', 'weather_triggers']
         }
       }
     },
@@ -237,6 +240,57 @@ function normalizeChannels(list) {
   return out.length ? out : APPROVED_CHANNELS.slice();
 }
 
+// Parse the base monthly dollar amount from a recommended package string like
+// "$5,000/month Climate Safeguard Fund (Growth)". Defaults to 5000 if not parseable.
+function parseBudgetBase(recommendedPackage) {
+  const match = String(recommendedPackage || '').replace(/,/g, '').match(/\$?\s*(\d{3,6})/);
+  const value = match ? Number(match[1]) : 5000;
+  return Number.isFinite(value) && value > 0 ? value : 5000;
+}
+
+function roundToNearest(value, step) {
+  return Math.round(value / step) * step;
+}
+
+function formatUSD(value) {
+  return '$' + Number(value || 0).toLocaleString('en-US');
+}
+
+// Peak months run at the full package amount; spend steps down in the off season.
+const SEASON_BUDGET_MULTIPLIER = { 'Peak': 1, 'Shoulder': 0.7, 'Off-Season': 0.5 };
+
+// Compute a suggested monthly media budget per plan month (lower in the off season)
+// and attach totals to the estimate. Budget is derived from the recommended package,
+// so the dollar math is deterministic rather than model-generated.
+function applyBudgets(estimate) {
+  const base = parseBudgetBase(estimate.recommended_package);
+  const plan = Array.isArray(estimate.month_by_month_plan) ? estimate.month_by_month_plan : [];
+
+  let total = 0;
+  for (const row of plan) {
+    const multiplier = SEASON_BUDGET_MULTIPLIER[row.season] ?? 1;
+    // Round to the nearest $250, with a sensible off-season floor.
+    const budget = Math.max(roundToNearest(base * multiplier, 250), 1000);
+    row.suggested_budget = budget;
+    row.suggested_budget_text = formatUSD(budget);
+    total += budget;
+  }
+
+  const monthsCount = plan.length || 1;
+  estimate.base_monthly_budget = base;
+  estimate.base_monthly_budget_text = formatUSD(base);
+  estimate.suggested_budget_total = total;
+  estimate.suggested_budget_total_text = formatUSD(total);
+  estimate.suggested_budget_months = plan.length;
+  estimate.average_monthly_budget = roundToNearest(total / monthsCount, 50);
+  estimate.average_monthly_budget_text = formatUSD(roundToNearest(total / monthsCount, 50));
+  estimate.budget_note =
+    `Suggested media budget starts at ${formatUSD(base)}/month during peak demand and steps down in the off season. ` +
+    `Across the ${plan.length}-month plan the suggested total is ${formatUSD(total)}. ` +
+    `Unused budget from slow-weather or off-season months rolls forward as Climate Safeguard Fund credit.`;
+  return estimate;
+}
+
 function buildProposalSummaryText(payload, estimate) {
   const triggers = (estimate.best_weather_triggers || []).join(', ');
   const channels = (estimate.recommended_channels || []).join(', ');
@@ -249,6 +303,7 @@ function buildProposalSummaryText(payload, estimate) {
     `Estimated RV/Camping Sites: ${estimate.estimated_site_count_low}–${estimate.estimated_site_count_high}`,
     `Estimated Peak-Season Camper Reach: ${estimate.estimated_peak_season_reach_low}–${estimate.estimated_peak_season_reach_high}`,
     `Recommended Package: ${estimate.recommended_package}`,
+    `Suggested Budget: ${estimate.base_monthly_budget_text}/month at peak, stepping down in the off season (plan total ${estimate.suggested_budget_total_text})`,
     `Recommended Channels: ${channels}`,
     `Best Weather Triggers: ${triggers}`,
     '',
@@ -260,7 +315,7 @@ function buildProposalSummaryText(payload, estimate) {
 
 function buildMonthByMonthText(estimate) {
   return (estimate.month_by_month_plan || [])
-    .map(row => `${row.month}: ${row.campaign_focus} — ${row.recommended_message} [Triggers: ${(row.weather_triggers || []).join(', ')}]`)
+    .map(row => `${row.month} (${row.season || 'Peak'} · ${row.suggested_budget_text || ''}): ${row.campaign_focus} — ${row.recommended_message} [Triggers: ${(row.weather_triggers || []).join(', ')}]`)
     .join('\n');
 }
 
@@ -318,6 +373,9 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
     // Enforce Smart 1's channel menu regardless of what the model returned (no newspapers/print/etc.).
     estimate.recommended_channels = normalizeChannels(estimate.recommended_channels);
 
+    // Compute suggested monthly budgets (peak-season baseline, stepping down in the off season).
+    applyBudgets(estimate);
+
     const suitePayload = {
       source: 'Smart RV Demand Estimate Form',
       lead_type: 'Smart RV Demand Package',
@@ -333,6 +391,10 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
       estimated_peak_season_reach_range: `${estimate.estimated_peak_season_reach_low}–${estimate.estimated_peak_season_reach_high} estimated peak-season camper reach`,
       recommended_channels_text: (estimate.recommended_channels || []).join(', '),
       best_weather_triggers_text: (estimate.best_weather_triggers || []).join(', '),
+      suggested_monthly_budget_text: `${estimate.base_monthly_budget_text}/month at peak`,
+      suggested_budget_total_text: estimate.suggested_budget_total_text,
+      average_monthly_budget_text: estimate.average_monthly_budget_text,
+      budget_note: estimate.budget_note,
       month_by_month_plan_text: buildMonthByMonthText(estimate),
       proposal_summary_text: buildProposalSummaryText(formData, estimate)
     };

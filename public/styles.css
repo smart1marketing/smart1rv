@@ -274,6 +274,187 @@ button:disabled { opacity: .65; cursor: not-allowed; }
   margin: 4px 0 8px;
 }
 
+/* Budget */
+.srv-budget-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 10px;
+}
+
+.srv-budget-tile {
+  background: #fff;
+  border: 1px solid var(--smart-border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.srv-budget-amount {
+  display: block;
+  color: var(--smart-navy);
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 800;
+}
+
+.srv-budget-note {
+  color: var(--smart-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.srv-plan-budget {
+  font-weight: 800;
+  color: var(--smart-navy);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.srv-plan-season {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--smart-blue);
+}
+
+.srv-season-offseason { color: #94794b; }
+.srv-season-shoulder { color: #4a6a9c; }
+.srv-season-peak { color: #1f7a4d; }
+
+/* Package details expander */
+.srv-details-toggle {
+  background: transparent;
+  color: var(--smart-blue);
+  border: 1px solid var(--smart-border);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 12px;
+  width: auto;
+}
+
+.srv-details-toggle:hover {
+  background: var(--smart-light);
+  color: var(--smart-navy);
+}
+
+.srv-details {
+  margin-top: 16px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--smart-border);
+  border-radius: 14px;
+}
+
+.srv-details[hidden] { display: none; }
+
+.srv-details h4 {
+  color: var(--smart-navy);
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+
+.srv-details h4:first-child { margin-top: 0; }
+
+.srv-detail-list {
+  margin: 6px 0 4px;
+  padding-left: 20px;
+}
+
+.srv-detail-list li {
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.srv-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.srv-tier {
+  border: 1px solid var(--smart-border);
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.srv-tier-rec {
+  border-color: var(--smart-navy);
+  box-shadow: 0 0 0 2px rgba(26, 46, 88, 0.12);
+}
+
+.srv-tier-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.srv-tier-name {
+  font-weight: 800;
+  color: var(--smart-navy);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 13px;
+}
+
+.srv-tier-badge {
+  background: var(--smart-navy);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.srv-tier-price {
+  color: var(--smart-navy);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.srv-tier-price span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--smart-muted);
+}
+
+.srv-tier-tagline {
+  color: var(--smart-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 6px 0 8px;
+}
+
+.srv-tier .srv-detail-list li {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.srv-detail-fineprint {
+  color: var(--smart-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 12px;
+}
+
+@media (max-width: 680px) {
+  .srv-tier-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .srv-budget-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 680px) {
   #smart-rv-demand-form {
     margin: 0;

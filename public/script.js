@@ -64,6 +64,98 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString();
 }
 
+function money(value) {
+  return '$' + Number(value || 0).toLocaleString('en-US');
+}
+
+// Fixed Smart RV Demand package levels (Climate Safeguard Fund tiers).
+const PACKAGE_TIERS = [
+  {
+    key: 'Starter',
+    amount: 3500,
+    tagline: 'Best for smaller or single-location markets testing weather-triggered demand.',
+    includes: ['Core CTV, Streaming Radio & Targeted Display', 'Primary weather triggers for your region', 'Campground & state-park geotargeting']
+  },
+  {
+    key: 'Growth',
+    amount: 5000,
+    tagline: 'Our most popular level — the full weather-triggered stack with strong peak-season weight.',
+    includes: ['Everything in Starter', 'Podcasts + Location Look-Back Retargeting', 'Broader weather-trigger coverage', 'Higher share of voice in peak weeks']
+  },
+  {
+    key: 'Premium',
+    amount: 7500,
+    tagline: 'Best for larger or multi-location dealers and competitive markets.',
+    includes: ['Everything in Growth', 'Digital Out-of-Home (DOOH) at local bars, restaurants, gas & shopping', 'Maximum trigger coverage', 'Highest peak-season media weight']
+  }
+];
+
+function packageBaseAmount(estimate) {
+  if (Number(estimate.base_monthly_budget) > 0) return Number(estimate.base_monthly_budget);
+  const m = String(estimate.recommended_package || '').replace(/,/g, '').match(/\$?\s*(\d{3,6})/);
+  return m ? Number(m[1]) : 5000;
+}
+
+// Collapsible "See package details" panel for the recommended package.
+function buildPackageDetails(estimate) {
+  const rec = packageBaseAmount(estimate);
+  const channels = Array.isArray(estimate.recommended_channels) ? estimate.recommended_channels : [];
+
+  const channelList = channels.length
+    ? `<ul class="srv-detail-list">${channels.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`
+    : '';
+
+  const tiers = PACKAGE_TIERS.map(t => {
+    const isRec = t.amount === rec;
+    return `
+      <div class="srv-tier${isRec ? ' srv-tier-rec' : ''}">
+        <div class="srv-tier-head">
+          <span class="srv-tier-name">${escapeHtml(t.key)}</span>
+          ${isRec ? '<span class="srv-tier-badge">Recommended</span>' : ''}
+        </div>
+        <div class="srv-tier-price">${money(t.amount)}<span>/month</span></div>
+        <p class="srv-tier-tagline">${escapeHtml(t.tagline)}</p>
+        <ul class="srv-detail-list">${t.includes.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+      </div>`;
+  }).join('');
+
+  return `
+    <button type="button" class="srv-details-toggle" id="srvPkgDetailsToggle" aria-expanded="false" aria-controls="srvPkgDetails">See package details</button>
+    <div class="srv-details" id="srvPkgDetails" hidden>
+      <h4>What’s included in your Climate Safeguard Fund</h4>
+      <p>Your monthly fund runs weather-triggered advertising across the channels we recommend for your market:</p>
+      ${channelList}
+      <ul class="srv-detail-list">
+        <li><strong>Weather-triggered activation</strong> — ads turn on when your selected weather conditions hit and pause when they don’t.</li>
+        <li><strong>Campaign management &amp; optimization</strong> — Smart 1 builds, runs, and tunes the campaigns for you.</li>
+        <li><strong>Reporting</strong> — track delivery and performance throughout the campaign.</li>
+        <li><strong>Rollover protection</strong> — unused media from poor-weather windows rolls into the next month.</li>
+        <li><strong>Off-season off-ramp</strong> — leftover peak-season budget can shift to winterization, spring prep, A/C or generator service campaigns, or carry 100% forward as credit.</li>
+      </ul>
+      <h4>Package levels</h4>
+      <div class="srv-tier-grid">${tiers}</div>
+      <p class="srv-detail-fineprint">All levels are month-to-month Climate Safeguard Fund subscriptions. Your recommended level is based on your market size and estimated opportunity — you can move up or down after a strategy review.</p>
+    </div>`;
+}
+
+function wirePackageDetails() {
+  const toggle = document.getElementById('srvPkgDetailsToggle');
+  const details = document.getElementById('srvPkgDetails');
+  if (!toggle || !details) return;
+  toggle.addEventListener('click', () => {
+    const isHidden = details.hasAttribute('hidden');
+    if (isHidden) {
+      details.removeAttribute('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.textContent = 'Hide package details';
+    } else {
+      details.setAttribute('hidden', '');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.textContent = 'See package details';
+    }
+  });
+}
+
 function escapeHtml(value) {
   return String(value == null ? '' : value)
     .replace(/&/g, '&amp;')
@@ -115,6 +207,7 @@ function buildReportHtml(estimate) {
         <h3>Recommended Package</h3>
         <p class="srv-package-name">${escapeHtml(estimate.recommended_package)}</p>
         ${estimate.recommended_package_reason ? `<p>${escapeHtml(estimate.recommended_package_reason)}</p>` : ''}
+        ${buildPackageDetails(estimate)}
       </div>`
     : '';
 
@@ -126,22 +219,45 @@ function buildReportHtml(estimate) {
     ? `<div class="srv-report-section"><h3>Recommended Weather Triggers for Your Market</h3>${chips(estimate.best_weather_triggers)}</div>`
     : '';
 
+  const budget = estimate.base_monthly_budget_text
+    ? `
+      <div class="srv-report-section srv-budget">
+        <h3>Suggested Media Budget</h3>
+        <div class="srv-budget-grid">
+          <div class="srv-budget-tile">
+            <span class="srv-budget-amount">${escapeHtml(estimate.base_monthly_budget_text)}/mo</span>
+            <span class="srv-stat-label">at peak demand</span>
+          </div>
+          <div class="srv-budget-tile">
+            <span class="srv-budget-amount">${escapeHtml(estimate.average_monthly_budget_text || '')}/mo</span>
+            <span class="srv-stat-label">blended average</span>
+          </div>
+          <div class="srv-budget-tile">
+            <span class="srv-budget-amount">${escapeHtml(estimate.suggested_budget_total_text || '')}</span>
+            <span class="srv-stat-label">plan total (${escapeHtml(String(estimate.suggested_budget_months || ''))} months)</span>
+          </div>
+        </div>
+        ${estimate.budget_note ? `<p class="srv-budget-note">${escapeHtml(estimate.budget_note)}</p>` : ''}
+      </div>`
+    : '';
+
   let plan = '';
   if (Array.isArray(estimate.month_by_month_plan) && estimate.month_by_month_plan.length) {
     const rows = estimate.month_by_month_plan.map(row => `
       <tr>
-        <td class="srv-plan-month">${escapeHtml(row.month)}</td>
+        <td class="srv-plan-month">${escapeHtml(row.month)}${row.season ? `<div class="srv-plan-season srv-season-${escapeHtml(String(row.season).toLowerCase().replace(/[^a-z]/g, ''))}">${escapeHtml(row.season)}</div>` : ''}</td>
         <td>
           <strong>${escapeHtml(row.campaign_focus)}</strong>
           <div class="srv-plan-message">${escapeHtml(row.recommended_message)}</div>
           ${chips(row.weather_triggers)}
         </td>
+        <td class="srv-plan-budget">${escapeHtml(row.suggested_budget_text || '')}</td>
       </tr>`).join('');
     plan = `
       <div class="srv-report-section">
-        <h3>Month-by-Month Campaign Plan</h3>
+        <h3>Month-by-Month Campaign Plan &amp; Budget</h3>
         <table class="srv-plan-table">
-          <thead><tr><th>Month</th><th>Focus &amp; Triggers</th></tr></thead>
+          <thead><tr><th>Month</th><th>Focus &amp; Triggers</th><th>Budget</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -159,6 +275,7 @@ function buildReportHtml(estimate) {
     ${pkg}
     ${channels}
     ${triggers}
+    ${budget}
     ${plan}
     ${disclaimer}
   `;
@@ -167,6 +284,7 @@ function buildReportHtml(estimate) {
 function renderEstimate(estimate) {
   const box = document.getElementById('marketOpportunityResult');
   box.innerHTML = buildReportHtml(estimate);
+  wirePackageDetails();
 }
 
 async function estimateAndSubmit() {
@@ -211,7 +329,7 @@ buildButton.addEventListener('click', async () => {
   showStep(4);
   buildButton.disabled = true;
 
-  document.getElementById('marketOpportunityResult').innerHTML = '<p>Building your campground market estimate and sending your lead into Smart 1 Suite...</p>';
+  document.getElementById('marketOpportunityResult').innerHTML = '<p>Calculating Marketing Conditions.</p>';
 
   try {
     const result = await estimateAndSubmit();
