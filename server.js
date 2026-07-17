@@ -86,9 +86,6 @@ This is not an exact database lookup. Create a reasonable marketing planning est
 
 Dealer inputs:
 Dealership Name: ${payload.dealership_name}
-Address: ${payload.address}
-City: ${payload.city}
-State: ${payload.state}
 ZIP: ${payload.zip}
 Website: ${payload.website_url}
 Sales Radius: ${payload.sales_radius_miles} miles
@@ -97,6 +94,10 @@ Assumed Campaign Objectives (assume ALL of these): ${payload.primary_goal}
 Assumed Service Opportunities (assume ALL of these): ${payload.main_service_opportunity}
 Available Weather Triggers (assume the dealer wants ALL relevant triggers on the table): ${payload.weather_triggers.join(', ')}
 Campaign start assumption: Start next month, ${nextMonthName}.
+
+The dealer only provided a ZIP code (no city/state). Derive the state, city area, and region from the ZIP code ${payload.zip} and base all geography, campground density, and seasonality on that.
+
+All Smart 1 campaigns are powered by data-driven audience targeting, which ALWAYS includes: in-market RV buyer data (households actively shopping for RVs), campground & state-park geotargeting, and location look-back retargeting (recent campground/RV-park visitors). Reference this data-driven targeting where natural in the dealer_summary.
 
 The dealer has NOT chosen a monthly package. YOU must recommend the best fit from these three levels based on market size and estimated opportunity: "$3,500/month Climate Safeguard Fund" (Starter), "$5,000/month Climate Safeguard Fund" (Growth), or "$7,500/month Climate Safeguard Fund" (Premium). Put your choice in recommended_package and explain it in recommended_package_reason.
 
@@ -305,6 +306,7 @@ function buildProposalSummaryText(payload, estimate) {
     `Recommended Package: ${estimate.recommended_package}`,
     `Suggested Budget: ${estimate.base_monthly_budget_text}/month at peak, stepping down in the off season (plan total ${estimate.suggested_budget_total_text})`,
     `Recommended Channels: ${channels}`,
+    `Audience & Data Targeting: In-market RV buyer data, campground & state-park geotargeting, and location look-back retargeting`,
     `Best Weather Triggers: ${triggers}`,
     '',
     estimate.dealer_summary,
@@ -390,6 +392,7 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
       estimated_site_range: `${estimate.estimated_site_count_low}–${estimate.estimated_site_count_high} estimated RV/camping sites`,
       estimated_peak_season_reach_range: `${estimate.estimated_peak_season_reach_low}–${estimate.estimated_peak_season_reach_high} estimated peak-season camper reach`,
       recommended_channels_text: (estimate.recommended_channels || []).join(', '),
+      audience_targeting_text: 'In-market RV buyer data, campground & state-park geotargeting, location look-back retargeting',
       best_weather_triggers_text: (estimate.best_weather_triggers || []).join(', '),
       suggested_monthly_budget_text: `${estimate.base_monthly_budget_text}/month at peak`,
       suggested_budget_total_text: estimate.suggested_budget_total_text,

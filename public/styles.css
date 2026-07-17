@@ -451,6 +451,106 @@ button:disabled { opacity: .65; cursor: not-allowed; }
   .srv-tier-grid { grid-template-columns: 1fr; }
 }
 
+/* Field label + pill (button) selectors */
+.srv-field-label {
+  color: var(--smart-navy);
+  font-weight: 700;
+  margin: 14px 0 8px;
+}
+
+.srv-field-label strong { color: var(--smart-blue); }
+
+.srv-pillgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.srv-pill {
+  background: #fff;
+  color: var(--smart-navy);
+  border: 1.5px solid var(--smart-border);
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  width: auto;
+  transition: all .15s ease;
+}
+
+.srv-pill:hover {
+  border-color: var(--smart-blue);
+  background: var(--smart-light);
+}
+
+.srv-pill.is-selected {
+  background: var(--smart-navy);
+  border-color: var(--smart-navy);
+  color: #fff;
+}
+
+.srv-pill-error {
+  color: #b3261e;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
+/* Secondary (download) button */
+.srv-secondary-btn {
+  background: #fff;
+  color: var(--smart-navy);
+  border: 1.5px solid var(--smart-navy);
+}
+
+.srv-secondary-btn:hover {
+  background: var(--smart-light);
+  color: var(--smart-navy);
+}
+
+/* PDF export container (rendered off-screen for html2pdf) */
+.srv-pdf-wrap {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 760px;
+  background: #fff;
+  color: var(--smart-text);
+  padding: 24px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.srv-pdf-header {
+  border-bottom: 3px solid var(--smart-navy);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.srv-pdf-title {
+  color: var(--smart-navy);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.srv-pdf-sub {
+  color: var(--smart-blue);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.srv-pdf-meta {
+  color: var(--smart-muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.srv-pdf-wrap .srv-report-section { page-break-inside: avoid; }
+.srv-pdf-wrap .srv-details-toggle,
+.srv-pdf-wrap .srv-details[hidden] { display: none !important; }
+
 @media (max-width: 680px) {
   .srv-budget-grid { grid-template-columns: 1fr; }
 }

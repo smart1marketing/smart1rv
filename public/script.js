@@ -12,13 +12,22 @@ const ALL_WEATHER_TRIGGERS = [
   'Tropical storm or hurricane watch', 'Snowbird season'
 ];
 
+// Fixed audience/data targeting that powers every campaign.
+const AUDIENCE_TARGETING = [
+  ['In-Market RV Buyer Data', 'households actively shopping for RVs'],
+  ['Campground & State-Park Geotargeting', 'reach campers where they camp'],
+  ['Location Look-Back Retargeting', 'recent campground / RV-park visitors']
+];
+
 const form = document.getElementById('rvDemandForm');
 const steps = document.querySelectorAll('.srv-step');
 const progressBar = document.getElementById('srvProgressBar');
 const buildButton = document.getElementById('buildOpportunityBtn');
+const downloadButton = document.getElementById('downloadReportBtn');
 const submitStatus = document.getElementById('submitStatus');
 const proposalRecipient = document.getElementById('proposalRecipient');
 const alternateEmail = document.getElementById('alternateEmail');
+const pillError = document.getElementById('srvPillError');
 
 let currentStep = 1;
 let estimateData = null;
@@ -32,16 +41,40 @@ function showStep(step) {
   progressBar.style.width = `${Math.min((step / steps.length) * 100, 100)}%`;
 }
 
+// --- Pill (button) selectors ---
+document.querySelectorAll('.srv-pillgroup').forEach(group => {
+  const hidden = document.querySelector(`input[name="${group.dataset.name}"]`);
+  group.querySelectorAll('.srv-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      group.querySelectorAll('.srv-pill').forEach(p => p.classList.remove('is-selected'));
+      pill.classList.add('is-selected');
+      if (hidden) hidden.value = pill.dataset.value;
+      if (pillError) pillError.hidden = true;
+    });
+  });
+});
+
+function validatePillGroups(activeStep) {
+  let ok = true;
+  activeStep.querySelectorAll('.srv-pillgroup[data-required="true"]').forEach(group => {
+    const hidden = document.querySelector(`input[name="${group.dataset.name}"]`);
+    if (!hidden || !hidden.value) ok = false;
+  });
+  if (!ok && pillError) pillError.hidden = false;
+  return ok;
+}
+
 function validateCurrentStep() {
   const activeStep = document.querySelector(`.srv-step[data-step="${currentStep}"]`);
-  const requiredFields = activeStep.querySelectorAll('[required]');
+  const requiredFields = activeStep.querySelectorAll('input[required], select[required], textarea[required]');
 
   for (const field of requiredFields) {
-    if (!field.value) {
+    if (field.type !== 'hidden' && !field.value) {
       field.reportValidity();
       return false;
     }
   }
+  if (!validatePillGroups(activeStep)) return false;
   return true;
 }
 
@@ -66,6 +99,19 @@ function formatNumber(value) {
 
 function money(value) {
   return '$' + Number(value || 0).toLocaleString('en-US');
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function chips(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return `<div class="srv-chips">${list.map(item => `<span class="srv-chip">${escapeHtml(item)}</span>`).join('')}</div>`;
 }
 
 // Fixed Smart RV Demand package levels (Climate Safeguard Fund tiers).
@@ -96,7 +142,6 @@ function packageBaseAmount(estimate) {
   return m ? Number(m[1]) : 5000;
 }
 
-// Collapsible "See package details" panel for the recommended package.
 function buildPackageDetails(estimate) {
   const rec = packageBaseAmount(estimate);
   const channels = Array.isArray(estimate.recommended_channels) ? estimate.recommended_channels : [];
@@ -126,6 +171,7 @@ function buildPackageDetails(estimate) {
       <p>Your monthly fund runs weather-triggered advertising across the channels we recommend for your market:</p>
       ${channelList}
       <ul class="srv-detail-list">
+        <li><strong>Data-driven audience targeting</strong> — in-market RV buyer data, campground &amp; state-park geotargeting, and location look-back retargeting.</li>
         <li><strong>Weather-triggered activation</strong> — ads turn on when your selected weather conditions hit and pause when they don’t.</li>
         <li><strong>Campaign management &amp; optimization</strong> — Smart 1 builds, runs, and tunes the campaigns for you.</li>
         <li><strong>Reporting</strong> — track delivery and performance throughout the campaign.</li>
@@ -154,19 +200,6 @@ function wirePackageDetails() {
       toggle.textContent = 'See package details';
     }
   });
-}
-
-function escapeHtml(value) {
-  return String(value == null ? '' : value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function chips(list) {
-  if (!Array.isArray(list) || list.length === 0) return '';
-  return `<div class="srv-chips">${list.map(item => `<span class="srv-chip">${escapeHtml(item)}</span>`).join('')}</div>`;
 }
 
 // Builds the full on-screen report shown before the proposal step.
@@ -214,6 +247,15 @@ function buildReportHtml(estimate) {
   const channels = (Array.isArray(estimate.recommended_channels) && estimate.recommended_channels.length)
     ? `<div class="srv-report-section"><h3>Recommended Media Channels</h3>${chips(estimate.recommended_channels)}</div>`
     : '';
+
+  const targeting = `
+    <div class="srv-report-section">
+      <h3>Audience &amp; Data Targeting</h3>
+      <p>Every campaign is powered by data-driven audience targeting:</p>
+      <ul class="srv-detail-list">
+        ${AUDIENCE_TARGETING.map(([name, desc]) => `<li><strong>${escapeHtml(name)}</strong> — ${escapeHtml(desc)}</li>`).join('')}
+      </ul>
+    </div>`;
 
   const triggers = (Array.isArray(estimate.best_weather_triggers) && estimate.best_weather_triggers.length)
     ? `<div class="srv-report-section"><h3>Recommended Weather Triggers for Your Market</h3>${chips(estimate.best_weather_triggers)}</div>`
@@ -268,12 +310,13 @@ function buildReportHtml(estimate) {
     : '';
 
   return `
-    <p class="srv-report-intro">Based on ${escapeHtml(dealership)}’s location, selected buyer radius, and regional campground density, here’s your weather-triggered RV demand opportunity:</p>
+    <p class="srv-report-intro">Based on ${escapeHtml(dealership)}’s ZIP code, selected buyer radius, and regional campground density, here’s your weather-triggered RV demand opportunity:</p>
     ${region}
     ${stats}
     ${summary}
     ${pkg}
     ${channels}
+    ${targeting}
     ${triggers}
     ${budget}
     ${plan}
@@ -285,6 +328,7 @@ function renderEstimate(estimate) {
   const box = document.getElementById('marketOpportunityResult');
   box.innerHTML = buildReportHtml(estimate);
   wirePackageDetails();
+  if (downloadButton) downloadButton.style.display = 'inline-block';
 }
 
 async function estimateAndSubmit() {
@@ -303,6 +347,66 @@ async function estimateAndSubmit() {
   return result;
 }
 
+// --- PDF download ---
+function loadHtml2Pdf() {
+  return new Promise((resolve, reject) => {
+    if (window.html2pdf) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Could not load the PDF library.'));
+    document.head.appendChild(s);
+  });
+}
+
+function safeFileName(name) {
+  return String(name || 'RV Dealer').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+async function downloadProposal() {
+  if (!estimateData) return;
+  const dealership = (getFormPayload().dealership_name || 'RV Dealer').trim();
+  const filename = `${safeFileName(dealership)} Weather Marketing Proposal.pdf`;
+
+  // Generate from the on-screen report (reliable) rather than an off-screen clone.
+  const container = document.getElementById('marketOpportunityResult');
+  const header = document.createElement('div');
+  header.className = 'srv-pdf-header';
+  header.innerHTML =
+    `<div class="srv-pdf-title">${escapeHtml(dealership)}</div>
+     <div class="srv-pdf-sub">Weather Marketing Proposal</div>
+     <div class="srv-pdf-meta">Prepared by Smart 1 Marketing &middot; ${new Date().toLocaleDateString()}</div>`;
+  container.insertBefore(header, container.firstChild);
+
+  const toggle = document.getElementById('srvPkgDetailsToggle');
+  const toggleDisplay = toggle ? toggle.style.display : null;
+  if (toggle) toggle.style.display = 'none';
+  const prevBg = container.style.background;
+  container.style.background = '#fff';
+
+  const original = downloadButton ? downloadButton.textContent : '';
+  if (downloadButton) { downloadButton.disabled = true; downloadButton.textContent = 'Preparing PDF…'; }
+
+  try {
+    await loadHtml2Pdf();
+    await window.html2pdf().set({
+      margin: [10, 10, 12, 10],
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from(container).save();
+  } catch (err) {
+    alert('Sorry — the PDF could not be generated. ' + err.message);
+  } finally {
+    if (header.parentNode) header.parentNode.removeChild(header);
+    if (toggle) toggle.style.display = toggleDisplay || '';
+    container.style.background = prevBg;
+    if (downloadButton) { downloadButton.disabled = false; downloadButton.textContent = original; }
+  }
+}
+
 document.querySelectorAll('.next-btn').forEach(button => {
   button.addEventListener('click', () => {
     if (!validateCurrentStep()) return;
@@ -316,6 +420,8 @@ document.querySelectorAll('.prev-btn').forEach(button => {
   });
 });
 
+if (downloadButton) downloadButton.addEventListener('click', downloadProposal);
+
 proposalRecipient.addEventListener('change', () => {
   const showAlt = proposalRecipient.value === 'other';
   alternateEmail.style.display = showAlt ? 'block' : 'none';
@@ -325,8 +431,8 @@ proposalRecipient.addEventListener('change', () => {
 buildButton.addEventListener('click', async () => {
   if (!validateCurrentStep()) return;
 
-  // Advance to the results step (all triggers/goals are assumed — nothing to pick).
-  showStep(4);
+  // Advance to the report step. The full report is gated behind completing the form.
+  showStep(3);
   buildButton.disabled = true;
 
   document.getElementById('marketOpportunityResult').innerHTML = '<p>Calculating Marketing Conditions.</p>';
@@ -353,7 +459,6 @@ form.addEventListener('submit', async event => {
   if (!validateCurrentStep()) return;
 
   // The lead has already been submitted when the estimate was built.
-  // This final step confirms to the prospect that Smart 1 Suite will handle the proposal workflow.
   if (submitCompleted) {
     submitStatus.textContent = 'Your request has been submitted. Smart 1 Suite will handle the proposal document and follow-up email.';
     form.querySelector('button[type="submit"]').disabled = true;
