@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
+import { buildProposalPdf, uploadPdfToGhlMedia, proposalFileName } from './proposal.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -378,6 +379,22 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
     // Compute suggested monthly budgets (peak-season baseline, stepping down in the off season).
     applyBudgets(estimate);
 
+    // Generate the proposal PDF and upload it to Smart 1 Suite media so the workflow can attach/email it.
+    // Wrapped so a PDF or upload failure NEVER blocks the lead from reaching Smart 1 Suite.
+    const proposal_pdf_filename = proposalFileName(formData);
+    let proposal_pdf_url = '';
+    if (String(process.env.PROPOSAL_PDF_ENABLED || 'true').toLowerCase() !== 'false') {
+      try {
+        const pdfBuffer = await buildProposalPdf(formData, estimate, new Date().toLocaleDateString('en-US'));
+        proposal_pdf_url = (await uploadPdfToGhlMedia(pdfBuffer, proposal_pdf_filename)) || '';
+        if (!proposal_pdf_url) {
+          console.warn('Proposal PDF generated but not uploaded (GHL media credentials not set).');
+        }
+      } catch (pdfErr) {
+        console.error('Proposal PDF generation/upload failed (continuing without it):', pdfErr.message);
+      }
+    }
+
     const suitePayload = {
       source: 'Smart RV Demand Estimate Form',
       lead_type: 'Smart RV Demand Package',
@@ -399,13 +416,16 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
       average_monthly_budget_text: estimate.average_monthly_budget_text,
       budget_note: estimate.budget_note,
       month_by_month_plan_text: buildMonthByMonthText(estimate),
-      proposal_summary_text: buildProposalSummaryText(formData, estimate)
+      proposal_summary_text: buildProposalSummaryText(formData, estimate),
+      proposal_pdf_url,
+      proposal_pdf_filename
     };
 
     const suiteResult = await sendToSmart1Suite(suitePayload);
 
     return res.json({
       ok: true,
+      proposal_pdf_url,
       estimate,
       suite_webhook_status: suiteResult.status
     });

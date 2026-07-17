@@ -17,3 +17,12 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      # Proposal PDF -> Smart 1 Suite media library (populates proposal_pdf_url)
+      - key: PROPOSAL_PDF_ENABLED
+        value: "true"
+      - key: GHL_MEDIA_API_VERSION
+        value: "2021-07-28"
+      - key: GHL_PRIVATE_INTEGRATION_TOKEN
+        sync: false
+      - key: GHL_LOCATION_ID
+        sync: false
