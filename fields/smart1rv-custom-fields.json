@@ -69,7 +69,7 @@
     "name": "Preferred Package Level",
     "key": "smart1rv_preferred_package_level",
     "dataType": "TEXT",
-    "placeholder": "$5,000/month Climate Safeguard Fund"
+    "placeholder": "$5,000/month SmartForecast"
   },
   {
     "name": "Selected Weather Triggers Text",
@@ -105,7 +105,7 @@
     "name": "Recommended Package",
     "key": "smart1rv_recommended_package",
     "dataType": "TEXT",
-    "placeholder": "$5,000/month Climate Safeguard Fund"
+    "placeholder": "$5,000/month SmartForecast"
   },
   {
     "name": "Dealer Summary",

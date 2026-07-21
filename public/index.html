@@ -14,29 +14,25 @@
     </div>
 
     <form id="rvDemandForm">
-      <!-- All sales + service goals are assumed. All weather triggers are assumed. The package is recommended for the dealer. -->
       <input name="primary_goal" type="hidden" value="All RV sales goals: new RV sales, used RV sales, trade-ins, and financing">
       <input name="main_service_opportunity" type="hidden" value="All RV service goals: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
 
-      <!-- Step 1: Hero + contact + ZIP -->
+      <!-- Step 1: Name + Contact + ZIP -->
       <section class="srv-step active" data-step="1">
         <p class="eyebrow">Smart RV Demand Package</p>
-        <h2>See Your Free Weather-Triggered RV Demand Report</h2>
-        <p class="helper">Answer a few quick questions and we’ll estimate your local campground market, recommend your weather triggers and budget, and build a proposal you can download.</p>
+        <h2>Build Your Free RV Demand Report</h2>
+        <p class="helper">Just three quick details to start — we’ll estimate your local campground market and recommend your plan.</p>
         <input name="dealership_name" placeholder="Dealership Name" required />
         <input name="contact_name" placeholder="Contact Name" required />
-        <input name="email" type="email" placeholder="Email Address" required />
-        <input name="phone" placeholder="Phone Number" required />
         <input name="zip" inputmode="numeric" placeholder="Dealership ZIP Code" required />
         <button type="button" class="next-btn">Continue</button>
       </section>
 
-      <!-- Step 2: Website + geography (button selectors) -->
+      <!-- Step 2: Geography -->
       <section class="srv-step" data-step="2">
         <p class="eyebrow">Your Market</p>
         <h2>How far do customers travel to you?</h2>
-        <p class="helper">We’ll assume the full RV demand funnel — all sales, trade-ins, financing, service, and seasonal maintenance — and recommend the right weather triggers, targeting, and budget for you.</p>
-
+        <p class="helper">We’ll assume the full RV demand funnel and recommend the right weather triggers, targeting, and budget for you.</p>
         <input name="website_url" type="url" placeholder="Dealership Website URL" required />
 
         <p class="srv-field-label">How far do customers travel to <strong>buy</strong> from you?</p>
@@ -65,7 +61,6 @@
           <button type="button" class="srv-pill" data-value="Yes">Yes</button>
         </div>
         <input type="hidden" name="multiple_locations" />
-
         <p class="srv-pill-error" id="srvPillError" hidden>Please make a selection for each question above.</p>
 
         <div class="button-row">
@@ -74,40 +69,27 @@
         </div>
       </section>
 
-      <!-- Step 3: Report (gated) + download -->
+      <!-- Step 3: Results (campfire -> preview -> email gate -> full) -->
       <section class="srv-step" data-step="3">
         <p class="eyebrow">Market Estimate</p>
         <h2>Your Smart RV Demand Market Estimate</h2>
-        <div id="marketOpportunityResult" class="opportunity-card">
-          <p>Calculating Marketing Conditions.</p>
-        </div>
-        <div class="button-row">
-          <button type="button" class="prev-btn">Back</button>
-          <button type="button" id="downloadReportBtn" class="srv-secondary-btn" style="display:none;">Download Proposal (PDF)</button>
-          <button type="button" class="next-btn">Continue to Proposal Request</button>
-        </div>
-      </section>
+        <div id="marketOpportunityResult" class="opportunity-card"></div>
 
-      <!-- Step 4: Proposal request -->
-      <section class="srv-step" data-step="4">
-        <p class="eyebrow">Proposal Request</p>
-        <h2>Send My Smart RV Demand Proposal Request</h2>
-        <select name="proposal_recipient" id="proposalRecipient" required>
-          <option value="same">Send proposal to the same email address</option>
-          <option value="other">Enter another email address</option>
-        </select>
-        <input name="alternate_email" id="alternateEmail" type="email" placeholder="Alternate Email Address" style="display:none;" />
-        <select name="review_request" required>
-          <option value="">Would you like a Smart 1 strategist to review this with you?</option>
-          <option>Yes, schedule a review</option>
-          <option>Email me the proposal first</option>
-        </select>
-        <textarea name="notes" placeholder="Any notes for our team?"></textarea>
-        <div class="button-row">
-          <button type="button" class="prev-btn">Back</button>
-          <button type="submit">Submit My Proposal Request</button>
+        <div id="srvUnlock" class="srv-unlock" style="display:none;">
+          <p class="srv-unlock-title">Unlock your full report</p>
+          <p class="srv-unlock-sub">Enter your email to see your complete plan, budget, and month-by-month campaign — we’ll send you a copy too. Phone is optional.</p>
+          <input name="email" id="srvEmail" type="email" placeholder="Email Address" />
+          <input name="phone" id="srvPhone" placeholder="Phone Number (optional)" />
+          <button type="button" id="srvUnlockBtn" class="srv-unlock-cta">Unlock My Full Report →</button>
+          <p id="srvUnlockErr" class="srv-pill-error" hidden>Please enter a valid email to see your full report.</p>
+          <p class="srv-unlock-fine">No obligation. We’ll never share your information.</p>
         </div>
-        <p id="submitStatus" class="helper"></p>
+
+        <div class="button-row" id="srvResultActions" style="display:none;">
+          <button type="button" class="prev-btn">Back</button>
+          <button type="button" id="downloadReportBtn" class="srv-secondary-btn">Download Proposal (PDF)</button>
+          <a href="https://smart1marketing.com/free-consultation" target="_blank" rel="noopener" class="srv-cta-link">Schedule a Free Strategy Review →</a>
+        </div>
       </section>
     </form>
   </main>

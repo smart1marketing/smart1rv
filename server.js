@@ -100,7 +100,7 @@ The dealer only provided a ZIP code (no city/state). Derive the state, city area
 
 All Smart 1 campaigns are powered by data-driven audience targeting, which ALWAYS includes: in-market RV buyer data (households actively shopping for RVs), campground & state-park geotargeting, and location look-back retargeting (recent campground/RV-park visitors). Reference this data-driven targeting where natural in the dealer_summary.
 
-The dealer has NOT chosen a monthly package. YOU must recommend the best fit from these three levels based on market size and estimated opportunity: "$3,500/month Climate Safeguard Fund" (Starter), "$5,000/month Climate Safeguard Fund" (Growth), or "$7,500/month Climate Safeguard Fund" (Premium). Put your choice in recommended_package and explain it in recommended_package_reason.
+The dealer has NOT chosen a monthly package. YOU must recommend the best fit from these three levels based on market size and estimated opportunity: "$3,500/month SmartForecast" (Starter), "$5,000/month SmartForecast" (Growth), or "$7,500/month SmartForecast" (Premium). Put your choice in recommended_package and explain it in recommended_package_reason.
 
 Return conservative-to-strong marketing ranges. Do not claim exact counts. Use ranges. Assume the dealer wants the full RV demand package covering all sales and all service goals; do not ask the dealer to narrow the campaign to only one sales or service objective.
 
@@ -243,7 +243,7 @@ function normalizeChannels(list) {
 }
 
 // Parse the base monthly dollar amount from a recommended package string like
-// "$5,000/month Climate Safeguard Fund (Growth)". Defaults to 5000 if not parseable.
+// "$5,000/month SmartForecast (Growth)". Defaults to 5000 if not parseable.
 function parseBudgetBase(recommendedPackage) {
   const match = String(recommendedPackage || '').replace(/,/g, '').match(/\$?\s*(\d{3,6})/);
   const value = match ? Number(match[1]) : 5000;
@@ -289,7 +289,7 @@ function applyBudgets(estimate) {
   estimate.budget_note =
     `Suggested media budget starts at ${formatUSD(base)}/month during peak demand and steps down in the off season. ` +
     `Across the ${plan.length}-month plan the suggested total is ${formatUSD(total)}. ` +
-    `Unused budget from slow-weather or off-season months rolls forward as Climate Safeguard Fund credit.`;
+    `Unused budget from slow-weather or off-season months rolls forward as SmartForecast credit.`;
   return estimate;
 }
 
@@ -360,30 +360,46 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'smart1rv', timestamp: new Date().toISOString() });
 });
 
+const PLACEHOLDER_EMAIL = process.env.PLACEHOLDER_LEAD_EMAIL || 'rvdealer@smart1marketing.com';
+
 app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
   try {
     const formData = normalizeFormPayload(req.body);
 
-    if (!formData.email || !formData.dealership_name || !formData.zip) {
+    // Only dealership + ZIP are required. Email is captured later (to unlock the full report);
+    // if it's missing we still save the lead using a placeholder inbox so nothing is lost.
+    if (!formData.dealership_name || !formData.zip) {
       return res.status(400).json({
         ok: false,
-        error: 'Missing required fields: dealership_name, email, and zip are required.'
+        error: 'Missing required fields: dealership_name and zip are required.'
       });
     }
 
-    const estimate = await createOpenAIEstimate(formData);
+    // Progressive-capture metadata.
+    const emailProvided = Boolean(formData.email);
+    if (!formData.email) formData.email = PLACEHOLDER_EMAIL;
+    if (!formData.proposal_recipient_email) formData.proposal_recipient_email = formData.email;
+    const lead_id = String(req.body.lead_id || '').slice(0, 64);
+    const lead_stage = String(req.body.lead_stage || (emailProvided ? 'Full Report Unlocked' : 'Preview — email not yet provided')).slice(0, 80);
 
-    // Enforce Smart 1's channel menu regardless of what the model returned (no newspapers/print/etc.).
-    estimate.recommended_channels = normalizeChannels(estimate.recommended_channels);
-
-    // Compute suggested monthly budgets (peak-season baseline, stepping down in the off season).
-    applyBudgets(estimate);
+    // Reuse the estimate/PDF from the preview call so the "unlock" call is cheap and consistent
+    // (no second OpenAI call, no duplicate PDF), and the displayed numbers never drift.
+    let estimate;
+    if (req.body.reuse_estimate && typeof req.body.reuse_estimate === 'object') {
+      estimate = req.body.reuse_estimate;
+    } else {
+      estimate = await createOpenAIEstimate(formData);
+      // Enforce Smart 1's channel menu regardless of what the model returned (no newspapers/print/etc.).
+      estimate.recommended_channels = normalizeChannels(estimate.recommended_channels);
+      // Compute suggested monthly budgets (peak-season baseline, stepping down in the off season).
+      applyBudgets(estimate);
+    }
 
     // Generate the proposal PDF and upload it to Smart 1 Suite media so the workflow can attach/email it.
     // Wrapped so a PDF or upload failure NEVER blocks the lead from reaching Smart 1 Suite.
     const proposal_pdf_filename = proposalFileName(formData);
-    let proposal_pdf_url = '';
-    if (String(process.env.PROPOSAL_PDF_ENABLED || 'true').toLowerCase() !== 'false') {
+    let proposal_pdf_url = String(req.body.reuse_pdf_url || '');
+    if (!proposal_pdf_url && String(process.env.PROPOSAL_PDF_ENABLED || 'true').toLowerCase() !== 'false') {
       try {
         const pdfBuffer = await buildProposalPdf(formData, estimate, new Date().toLocaleDateString('en-US'));
         proposal_pdf_url = (await uploadPdfToGhlMedia(pdfBuffer, proposal_pdf_filename)) || '';
@@ -399,6 +415,10 @@ app.post('/api/rv-demand/estimate-and-submit', async (req, res) => {
       source: 'Smart RV Demand Estimate Form',
       lead_type: 'Smart RV Demand Package',
       lead_status: 'New RV Demand Lead',
+      lead_stage,
+      lead_id,
+      email_provided: emailProvided,
+      placeholder_email_used: !emailProvided,
       submitted_at: new Date().toISOString(),
       ...formData,
       selected_weather_triggers: formData.weather_triggers,

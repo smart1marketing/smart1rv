@@ -1,66 +1,43 @@
 <!--
-Smart RV Demand Package - Multi-Part Smart 1 Suite Embed
+Smart RV Demand Package - Smart 1 Suite Embed
 Paste this entire file into a Smart 1 Suite / Smart 1 Sites HTML code block.
 
 IMPORTANT:
 1. API_BASE is already set to https://smart1rv.onrender.com (your live Render service).
 2. In Render, set ALLOWED_ORIGINS to the domain this form is embedded on, OR leave it BLANK
-   to allow all origins while testing. (You can also use "*".) A wrong ALLOWED_ORIGINS value
-   is the usual cause of a "Failed to fetch" error in the browser.
-3. Simplified intake: ZIP code only (no street address), button selectors for travel radius,
-   no "when would you like to start". The full report is gated behind completing the form, and
-   the dealer can download it as a PDF named "<Dealership> Weather Marketing Proposal.pdf".
-4. Targeting always includes in-market RV buyer data, campground/state-park geotargeting, and
-   location look-back retargeting.
+   to allow all origins while testing. A wrong ALLOWED_ORIGINS value is the usual cause of a
+   "Failed to fetch" error in the browser.
+3. Flow: Step 1 = Dealership Name, Contact Name, ZIP. Step 2 = website + travel radius (buttons).
+   Step 3 = animated campfire while building, then a PREVIEW; the dealer enters an email
+   (phone optional) to unlock the full report + PDF download. Every build is saved to Smart 1
+   Suite immediately (progressive capture) — if no email is given yet, a placeholder inbox is
+   used server-side so no lead is lost. Providing the email enriches the record.
 -->
 
 <div id="smart1rv-widget" class="smart1rv-widget">
   <div class="smart1rv-card">
-    <div class="smart1rv-progress-wrap" aria-hidden="true">
-      <div class="smart1rv-progress-bar" id="smart1rvProgressBar" style="width:25%;"></div>
-    </div>
-
+    <div class="smart1rv-progress-wrap" aria-hidden="true"><div class="smart1rv-progress-bar" id="smart1rvProgressBar" style="width:33%;"></div></div>
     <form id="smart1rvForm">
       <input name="primary_goal" type="hidden" value="All RV sales goals: new RV sales, used RV sales, trade-ins, and financing">
       <input name="main_service_opportunity" type="hidden" value="All RV service goals: service appointments, A/C service, roof/seal inspections, generator checks, de-winterization, winterization, and seasonal maintenance">
 
-      <!-- Step 1: Hero + contact + ZIP -->
+      <!-- Step 1: Name + Contact + ZIP -->
       <div class="smart1rv-step" data-step="1" style="display:block;">
-        <p class="smart1rv-eyebrow">Smart RV Demand Package</p>
-        <h2>See Your Free Weather-Triggered RV Demand Report</h2>
-        <p class="smart1rv-helper">Answer a few quick questions and we’ll estimate your local campground market, recommend your weather triggers and budget, and build a proposal you can download.</p>
-
-        <label>Dealership Name
-          <input name="dealership_name" placeholder="Example RV Center" required>
-        </label>
-        <label>Contact Name
-          <input name="contact_name" placeholder="First and Last Name" required>
-        </label>
-        <label>Email Address
-          <input name="email" type="email" placeholder="name@example.com" required>
-        </label>
-        <label>Phone Number
-          <input name="phone" placeholder="555-555-5555" required>
-        </label>
-        <label>Dealership ZIP Code
-          <input name="zip" inputmode="numeric" placeholder="ZIP Code" required>
-        </label>
-
-        <div class="smart1rv-actions">
-          <button type="button" class="smart1rv-next">Continue</button>
-        </div>
+        <p class="smart1rv-eyebrow">Start Here</p>
+        <h2>Build Your Free RV Demand Report</h2>
+        <p class="smart1rv-helper">Just three quick details to start — we’ll estimate your local campground market and recommend your plan.</p>
+        <label>Dealership Name<input name="dealership_name" placeholder="Example RV Center" required></label>
+        <label>Contact Name<input name="contact_name" placeholder="First and Last Name" required></label>
+        <label>Dealership ZIP Code<input name="zip" inputmode="numeric" placeholder="ZIP Code" required></label>
+        <div class="smart1rv-actions"><button type="button" class="smart1rv-next">Continue →</button></div>
       </div>
 
-      <!-- Step 2: Website + geography (button selectors) -->
+      <!-- Step 2: Geography -->
       <div class="smart1rv-step" data-step="2" style="display:none;">
         <p class="smart1rv-eyebrow">Your Market</p>
         <h2>How far do customers travel to you?</h2>
-        <p class="smart1rv-helper">We’ll assume the full RV demand funnel — all sales, trade-ins, financing, service, and seasonal maintenance — and recommend the right weather triggers, targeting, and budget for you.</p>
-
-        <label>Dealership Website URL
-          <input name="website_url" type="url" placeholder="https://yourdealership.com" required>
-        </label>
-
+        <p class="smart1rv-helper">We’ll assume the full RV demand funnel and recommend the right weather triggers, targeting, and budget for you.</p>
+        <label>Dealership Website URL<input name="website_url" type="url" placeholder="https://yourdealership.com" required></label>
         <p class="smart1rv-field-label">How far do customers travel to <strong>buy</strong> from you?</p>
         <div class="smart1rv-pillgroup" data-name="sales_radius_miles" data-required="true">
           <button type="button" class="smart1rv-pill" data-value="25">25 mi</button>
@@ -70,7 +47,6 @@ IMPORTANT:
           <button type="button" class="smart1rv-pill" data-value="150">150 mi</button>
         </div>
         <input type="hidden" name="sales_radius_miles">
-
         <p class="smart1rv-field-label">How far do customers travel for <strong>service</strong>?</p>
         <div class="smart1rv-pillgroup" data-name="service_radius_miles" data-required="true">
           <button type="button" class="smart1rv-pill" data-value="15">15 mi</button>
@@ -80,512 +56,255 @@ IMPORTANT:
           <button type="button" class="smart1rv-pill" data-value="75">75 mi</button>
         </div>
         <input type="hidden" name="service_radius_miles">
-
         <p class="smart1rv-field-label">Do you have more than one location?</p>
         <div class="smart1rv-pillgroup" data-name="multiple_locations" data-required="true">
           <button type="button" class="smart1rv-pill" data-value="No">No</button>
           <button type="button" class="smart1rv-pill" data-value="Yes">Yes</button>
         </div>
         <input type="hidden" name="multiple_locations">
-
         <p class="smart1rv-pill-error" id="smart1rvPillError" hidden>Please make a selection for each question above.</p>
-
         <div class="smart1rv-actions">
           <button type="button" class="smart1rv-back">Back</button>
           <button type="button" id="smart1rvBuildEstimate">Build My Market Estimate</button>
         </div>
       </div>
 
-      <!-- Step 3: Report (gated) + download -->
+      <!-- Step 3: Results (campfire -> preview -> email gate -> full) -->
       <div class="smart1rv-step" data-step="3" style="display:none;">
         <p class="smart1rv-eyebrow">Market Estimate</p>
         <h2>Your Smart RV Demand Market Estimate</h2>
-
-        <div id="smart1rvEstimateBox" class="smart1rv-estimate-card">
-          <p>Calculating Marketing Conditions.</p>
+        <div id="smart1rvEstimateBox" class="smart1rv-estimate-card"></div>
+        <div id="smart1rvUnlock" class="s1u-panel" style="display:none;">
+          <p class="s1u-title">Unlock your full report</p>
+          <p class="s1u-sub">Enter your email to see your complete plan, budget, and month-by-month campaign — we’ll send you a copy too. Phone is optional.</p>
+          <label>Email Address<input name="email" id="s1uEmail" type="email" placeholder="name@example.com"></label>
+          <label>Phone Number (optional)<input name="phone" id="s1uPhone" placeholder="555-555-5555"></label>
+          <button type="button" id="smart1rvUnlockBtn" class="s1u-cta">Unlock My Full Report →</button>
+          <p id="s1uErr" class="smart1rv-pill-error" hidden>Please enter a valid email to see your full report.</p>
+          <p class="s1u-fine">No obligation. We’ll never share your information.</p>
         </div>
-
-        <div class="smart1rv-actions">
+        <div class="smart1rv-actions" id="smart1rvResultActions" style="display:none;">
           <button type="button" class="smart1rv-back">Back</button>
-          <button type="button" id="smart1rvDownload" class="smart1rv-secondary" style="display:none;">Download Proposal (PDF)</button>
-          <button type="button" class="smart1rv-next">Continue to Proposal Request</button>
+          <button type="button" id="smart1rvDownload" class="smart1rv-secondary">Download Proposal (PDF)</button>
+          <a href="https://smart1marketing.com/free-consultation" target="_blank" rel="noopener" class="smart1rv-cta-link">Schedule a Free Strategy Review →</a>
         </div>
-      </div>
-
-      <!-- Step 4: Proposal request -->
-      <div class="smart1rv-step" data-step="4" style="display:none;">
-        <p class="smart1rv-eyebrow">Proposal Request</p>
-        <h2>Send My Smart RV Demand Proposal Request</h2>
-
-        <label>Who should receive the proposal?
-          <select name="proposal_recipient" id="smart1rvProposalRecipient" required>
-            <option value="same">Send proposal to the same email address</option>
-            <option value="other">Enter another email address</option>
-          </select>
-        </label>
-        <label id="smart1rvAlternateEmailWrap" style="display:none;">Alternate Email Address
-          <input name="alternate_email" id="smart1rvAlternateEmail" type="email" placeholder="alternate@example.com">
-        </label>
-        <label>Would you like a Smart 1 strategist to review this with you?
-          <select name="review_request" required>
-            <option value="">Select one</option>
-            <option>Yes, schedule a review</option>
-            <option>Email me the proposal first</option>
-          </select>
-        </label>
-        <label>Any notes for our team?
-          <textarea name="notes" placeholder="Optional notes"></textarea>
-        </label>
-
-        <div class="smart1rv-actions">
-          <button type="button" class="smart1rv-back">Back</button>
-          <button type="submit" id="smart1rvSubmitButton">Submit My Proposal Request</button>
-        </div>
-        <p id="smart1rvSubmitStatus" class="smart1rv-helper"></p>
       </div>
     </form>
   </div>
 </div>
 
 <style>
-  #smart1rv-widget { font-family: Arial, Helvetica, sans-serif; color:#172033; }
-  #smart1rv-widget * { box-sizing: border-box; }
-  #smart1rv-widget .smart1rv-card { max-width: 780px; margin: 40px auto; background: #fff; padding: 34px; border-radius: 18px; box-shadow: 0 14px 45px rgba(26,46,88,.12); }
-  #smart1rv-widget h2 { color:#1A2E58; margin:0 0 14px; font-size: clamp(26px,4vw,38px); line-height:1.08; }
-  #smart1rv-widget .smart1rv-eyebrow { color:#28477f; font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:13px; margin:0 0 10px; }
-  #smart1rv-widget .smart1rv-helper { color:#687386; line-height:1.5; }
-  #smart1rv-widget label { display:block; margin-bottom:14px; font-weight:700; color:#1A2E58; }
-  #smart1rv-widget input, #smart1rv-widget select, #smart1rv-widget textarea { width:100%; padding:14px 15px; margin-top:7px; border:1px solid #dce4f2; border-radius:10px; font-size:16px; color:#172033; background:#fff; font-weight:400; }
-  #smart1rv-widget textarea { min-height:110px; resize:vertical; }
-  #smart1rv-widget button { background:#1A2E58; color:#fff; border:0; padding:14px 22px; border-radius:10px; cursor:pointer; font-size:16px; font-weight:700; }
-  #smart1rv-widget button:hover { background:#28477f; }
-  #smart1rv-widget button:disabled { opacity:.65; cursor:not-allowed; }
-  #smart1rv-widget .smart1rv-back { background:#687386; }
-  #smart1rv-widget .smart1rv-back:hover { background:#535d6e; }
-  #smart1rv-widget .smart1rv-secondary { background:#fff; color:#1A2E58; border:1.5px solid #1A2E58; }
-  #smart1rv-widget .smart1rv-secondary:hover { background:#f5f8ff; color:#1A2E58; }
-  #smart1rv-widget .smart1rv-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-  #smart1rv-widget .smart1rv-progress-wrap { width:100%; background:#edf0f5; border-radius:999px; margin-bottom:28px; overflow:hidden; }
-  #smart1rv-widget .smart1rv-progress-bar { height:9px; background:#1A2E58; transition:width .25s ease; }
+  #smart1rv-widget{font-family:Arial,Helvetica,sans-serif;color:#172033;}
+  #smart1rv-widget *{box-sizing:border-box;}
+  #smart1rv-widget .smart1rv-card{max-width:780px;margin:40px auto;background:#fff;padding:34px;border-radius:18px;box-shadow:0 14px 45px rgba(26,46,88,.12);}
+  #smart1rv-widget h2{color:#1A2E58;margin:0 0 14px;font-size:clamp(24px,3vw,32px);line-height:1.1;}
+  #smart1rv-widget .smart1rv-eyebrow{color:#28477f;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px;margin:0 0 8px;}
+  #smart1rv-widget .smart1rv-helper{color:#687386;line-height:1.5;}
+  #smart1rv-widget label{display:block;margin-bottom:14px;font-weight:700;color:#1A2E58;}
+  #smart1rv-widget input,#smart1rv-widget select,#smart1rv-widget textarea{width:100%;padding:14px 15px;margin-top:7px;border:1px solid #dce4f2;border-radius:10px;font-size:16px;color:#172033;background:#fff;font-weight:400;}
+  #smart1rv-widget textarea{min-height:100px;resize:vertical;}
+  #smart1rv-widget button{background:#1A2E58;color:#fff;border:0;padding:14px 22px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:800;}
+  #smart1rv-widget button:hover{background:#28477f;}
+  #smart1rv-widget button:disabled{opacity:.65;cursor:not-allowed;}
+  #smart1rv-widget .smart1rv-back{background:#687386;}
+  #smart1rv-widget .smart1rv-back:hover{background:#535d6e;}
+  #smart1rv-widget .smart1rv-secondary{background:#fff;color:#1A2E58;border:1.5px solid #1A2E58;}
+  #smart1rv-widget .smart1rv-secondary:hover{background:#f5f8ff;color:#1A2E58;}
+  #smart1rv-widget .smart1rv-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  #smart1rv-widget .smart1rv-progress-wrap{width:100%;background:#edf0f5;border-radius:999px;margin-bottom:28px;overflow:hidden;}
+  #smart1rv-widget .smart1rv-progress-bar{height:9px;background:#F0A93B;transition:width .25s ease;}
+  #smart1rv-widget .smart1rv-field-label{color:#1A2E58;font-weight:700;margin:14px 0 8px;}
+  #smart1rv-widget .smart1rv-field-label strong{color:#28477f;}
+  #smart1rv-widget .smart1rv-pillgroup{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  #smart1rv-widget .smart1rv-pill{width:auto;background:#fff;color:#1A2E58;border:1.5px solid #dce4f2;border-radius:999px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s ease;margin-top:0;}
+  #smart1rv-widget .smart1rv-pill:hover{border-color:#28477f;background:#f5f8ff;}
+  #smart1rv-widget .smart1rv-pill.is-selected{background:#1A2E58;border-color:#1A2E58;color:#fff;}
+  #smart1rv-widget .smart1rv-pill-error{color:#b3261e;font-size:14px;font-weight:600;margin:8px 0 0;}
+  #smart1rv-widget .smart1rv-estimate-card{background:#f5f8ff;border:1px solid #dce4f2;padding:22px;border-radius:14px;margin-bottom:0;}
+  #smart1rv-widget .smart1rv-estimate-card p{line-height:1.55;}
+  #smart1rv-widget .smart1rv-number{display:inline-block;color:#1A2E58;font-size:clamp(22px,3.4vw,30px);font-weight:800;}
+  #smart1rv-widget .smart1rv-disclaimer{font-size:13px;color:#687386;}
+  #smart1rv-widget .smart1rv-report-intro{font-size:16px;line-height:1.55;margin:0 0 18px;}
+  #smart1rv-widget .smart1rv-section{padding:18px 0;border-top:1px solid #dce4f2;}
+  #smart1rv-widget .smart1rv-section h3{color:#1A2E58;font-size:18px;margin:0 0 10px;}
+  #smart1rv-widget .smart1rv-section p{line-height:1.55;margin:0 0 8px;}
+  #smart1rv-widget .smart1rv-region{border-top:0;background:#fff;border:1px solid #dce4f2;border-radius:12px;padding:16px 18px;margin-bottom:4px;}
+  #smart1rv-widget .smart1rv-region-badge{display:inline-block;background:#1A2E58;color:#fff;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;margin-bottom:10px;}
+  #smart1rv-widget .smart1rv-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:4px 0 6px;}
+  #smart1rv-widget .smart1rv-stat{background:#fff;border:1px solid #dce4f2;border-radius:12px;padding:16px;text-align:center;}
+  #smart1rv-widget .smart1rv-stat-label{display:block;color:#687386;font-size:13px;margin-top:6px;line-height:1.35;}
+  #smart1rv-widget .smart1rv-package-name{color:#1A2E58;font-weight:800;font-size:18px;}
+  #smart1rv-widget .smart1rv-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  #smart1rv-widget .smart1rv-chip{background:#f5f8ff;border:1px solid #dce4f2;color:#28477f;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;}
+  #smart1rv-widget .smart1rv-plan-table{width:100%;border-collapse:collapse;margin-top:6px;}
+  #smart1rv-widget .smart1rv-plan-table th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#687386;padding:8px 10px;border-bottom:2px solid #dce4f2;}
+  #smart1rv-widget .smart1rv-plan-table td{padding:12px 10px;border-bottom:1px solid #dce4f2;vertical-align:top;line-height:1.5;}
+  #smart1rv-widget .smart1rv-plan-month{font-weight:800;color:#1A2E58;white-space:nowrap;}
+  #smart1rv-widget .smart1rv-plan-message{color:#687386;font-size:14px;margin:4px 0 8px;}
+  #smart1rv-widget .smart1rv-plan-season{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#28477f;}
+  #smart1rv-widget .smart1rv-plan-budget{font-weight:800;color:#1A2E58;white-space:nowrap;text-align:right;}
+  #smart1rv-widget .smart1rv-budget-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:4px 0 10px;}
+  #smart1rv-widget .smart1rv-budget-tile{background:#fff;border:1px solid #dce4f2;border-radius:12px;padding:16px;text-align:center;}
+  #smart1rv-widget .smart1rv-budget-amount{display:block;color:#1A2E58;font-size:clamp(20px,3vw,26px);font-weight:800;}
+  #smart1rv-widget .smart1rv-budget-note{color:#687386;font-size:14px;line-height:1.5;}
+  #smart1rv-widget .smart1rv-details-toggle{background:transparent;color:#28477f;border:1px solid #dce4f2;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;margin-top:12px;width:auto;}
+  #smart1rv-widget .smart1rv-details-toggle:hover{background:#f5f8ff;color:#1A2E58;}
+  #smart1rv-widget .smart1rv-details{margin-top:16px;padding:18px;background:#fff;border:1px solid #dce4f2;border-radius:14px;}
+  #smart1rv-widget .smart1rv-details[hidden]{display:none;}
+  #smart1rv-widget .smart1rv-details h4{color:#1A2E58;font-size:15px;margin:16px 0 8px;}
+  #smart1rv-widget .smart1rv-details h4:first-child{margin-top:0;}
+  #smart1rv-widget .smart1rv-detail-list{margin:6px 0 4px;padding-left:20px;}
+  #smart1rv-widget .smart1rv-detail-list li{line-height:1.5;margin-bottom:6px;}
+  #smart1rv-widget .smart1rv-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:8px;}
+  #smart1rv-widget .smart1rv-tier{border:1px solid #dce4f2;border-radius:12px;padding:16px;background:#fff;}
+  #smart1rv-widget .smart1rv-tier-rec{border-color:#1A2E58;box-shadow:0 0 0 2px rgba(26,46,88,.12);}
+  #smart1rv-widget .smart1rv-tier-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+  #smart1rv-widget .smart1rv-tier-name{font-weight:800;color:#1A2E58;text-transform:uppercase;letter-spacing:.04em;font-size:13px;}
+  #smart1rv-widget .smart1rv-tier-badge{background:#1A2E58;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:999px;}
+  #smart1rv-widget .smart1rv-tier-price{color:#1A2E58;font-size:22px;font-weight:800;}
+  #smart1rv-widget .smart1rv-tier-price span{font-size:13px;font-weight:600;color:#687386;}
+  #smart1rv-widget .smart1rv-tier-tagline{color:#687386;font-size:13px;line-height:1.45;margin:6px 0 8px;}
+  #smart1rv-widget .smart1rv-detail-fineprint{color:#687386;font-size:12px;line-height:1.5;margin-top:12px;}
 
-  /* Pill (button) selectors */
-  #smart1rv-widget .smart1rv-field-label { color:#1A2E58; font-weight:700; margin:14px 0 8px; }
-  #smart1rv-widget .smart1rv-field-label strong { color:#28477f; }
-  #smart1rv-widget .smart1rv-pillgroup { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:6px; }
-  #smart1rv-widget .smart1rv-pill { width:auto; background:#fff; color:#1A2E58; border:1.5px solid #dce4f2; border-radius:999px; padding:12px 20px; font-size:15px; font-weight:700; cursor:pointer; transition:all .15s ease; margin-top:0; }
-  #smart1rv-widget .smart1rv-pill:hover { border-color:#28477f; background:#f5f8ff; }
-  #smart1rv-widget .smart1rv-pill.is-selected { background:#1A2E58; border-color:#1A2E58; color:#fff; }
-  #smart1rv-widget .smart1rv-pill-error { color:#b3261e; font-size:14px; font-weight:600; margin:4px 0 0; }
+  /* Campfire loader */
+  #smart1rv-widget .cf-scene{text-align:center;padding:14px 0 6px;}
+  #smart1rv-widget .cf-svg{width:150px;height:150px;display:block;margin:0 auto;}
+  #smart1rv-widget .cf-glow{opacity:.5;transform-box:fill-box;transform-origin:center;animation:cfGlow 1.6s ease-in-out infinite;}
+  @keyframes cfGlow{0%,100%{opacity:.35;transform:scale(.95);}50%{opacity:.7;transform:scale(1.08);}}
+  #smart1rv-widget .cf-flame{transform-box:fill-box;transform-origin:50% 100%;animation:cfFlick 900ms ease-in-out infinite;}
+  #smart1rv-widget .cf-f1{animation-duration:1100ms;} #smart1rv-widget .cf-f2{animation-duration:820ms;animation-delay:-120ms;} #smart1rv-widget .cf-f3{animation-duration:640ms;animation-delay:-60ms;}
+  @keyframes cfFlick{0%,100%{transform:scaleY(1) scaleX(1);}25%{transform:scaleY(1.09) scaleX(.95) translateX(-1px);}50%{transform:scaleY(.93) scaleX(1.05);}75%{transform:scaleY(1.05) scaleX(.97) translateX(1px);}}
+  #smart1rv-widget .cf-spark{fill:#FFD26A;opacity:0;transform-box:fill-box;transform-origin:center;animation:cfSpark 1.8s linear infinite;}
+  #smart1rv-widget .cf-s1{animation-delay:0s;} #smart1rv-widget .cf-s2{animation-delay:.5s;} #smart1rv-widget .cf-s3{animation-delay:1s;} #smart1rv-widget .cf-s4{animation-delay:1.35s;}
+  @keyframes cfSpark{0%{opacity:0;transform:translateY(0) scale(1);}15%{opacity:1;}100%{opacity:0;transform:translateY(-56px) translateX(6px) scale(.4);}}
+  #smart1rv-widget .cf-text{text-align:center;color:#1A2E58;font-weight:800;font-size:16px;margin:6px 0 2px;}
+  #smart1rv-widget .cf-sub{text-align:center;color:#687386;font-size:13px;margin:0;}
+  #smart1rv-widget .cf-dots::after{display:inline-block;content:'';animation:cfDots 1.4s steps(4,end) infinite;}
+  @keyframes cfDots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
 
-  #smart1rv-widget .smart1rv-estimate-card { background:#f5f8ff; border:1px solid #dce4f2; padding:22px; border-radius:14px; margin-bottom:18px; }
-  #smart1rv-widget .smart1rv-estimate-card p { line-height:1.55; }
-  #smart1rv-widget .smart1rv-number { display:inline-block; color:#1A2E58; font-size:clamp(22px,3.4vw,30px); font-weight:800; }
-  #smart1rv-widget .smart1rv-disclaimer { font-size:13px; color:#687386; }
+  /* Unlock / email gate */
+  #smart1rv-widget .s1u-teaser{margin-top:14px;padding:16px;border:1px dashed #c9d6ee;border-radius:12px;background:#fbfdff;}
+  #smart1rv-widget .s1u-teaser-h{font-weight:800;color:#1A2E58;margin:0 0 8px;font-size:14px;}
+  #smart1rv-widget .s1u-teaser ul{margin:0;padding-left:20px;color:#687386;}
+  #smart1rv-widget .s1u-teaser li{margin-bottom:5px;font-size:14px;}
+  #smart1rv-widget .s1u-panel{margin-top:16px;background:#fff;border:2px solid #1A2E58;border-radius:14px;padding:18px;}
+  #smart1rv-widget .s1u-title{font-weight:800;color:#1A2E58;font-size:17px;margin:0 0 4px;}
+  #smart1rv-widget .s1u-sub{color:#687386;font-size:14px;margin:0 0 12px;}
+  #smart1rv-widget .s1u-cta{background:#F0A93B;color:#20160a;width:100%;margin-top:4px;}
+  #smart1rv-widget .s1u-cta:hover{background:#e59a20;}
+  #smart1rv-widget .s1u-fine{color:#8a98b3;font-size:12px;margin:10px 0 0;text-align:center;}
+  #smart1rv-widget .smart1rv-cta-link{display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#1A2E58;border:1.5px solid #1A2E58;font-weight:800;padding:13px 18px;border-radius:10px;text-decoration:none;font-size:15px;}
+  #smart1rv-widget .smart1rv-cta-link:hover{background:#f5f8ff;}
 
-  /* Full on-screen report */
-  #smart1rv-widget .smart1rv-report-intro { font-size:16px; line-height:1.55; margin:0 0 18px; }
-  #smart1rv-widget .smart1rv-section { padding:18px 0; border-top:1px solid #dce4f2; }
-  #smart1rv-widget .smart1rv-section h3 { color:#1A2E58; font-size:18px; margin:0 0 10px; }
-  #smart1rv-widget .smart1rv-section p { line-height:1.55; margin:0 0 8px; }
-  #smart1rv-widget .smart1rv-region { border-top:0; background:#fff; border:1px solid #dce4f2; border-radius:12px; padding:16px 18px; margin-bottom:4px; }
-  #smart1rv-widget .smart1rv-region-badge { display:inline-block; background:#1A2E58; color:#fff; font-weight:700; font-size:14px; padding:8px 14px; border-radius:999px; margin-bottom:10px; }
-  #smart1rv-widget .smart1rv-stat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:4px 0 6px; }
-  #smart1rv-widget .smart1rv-stat { background:#fff; border:1px solid #dce4f2; border-radius:12px; padding:16px; text-align:center; }
-  #smart1rv-widget .smart1rv-stat-label { display:block; color:#687386; font-size:13px; margin-top:6px; line-height:1.35; }
-  #smart1rv-widget .smart1rv-package-name { color:#1A2E58; font-weight:800; font-size:18px; }
-  #smart1rv-widget .smart1rv-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-  #smart1rv-widget .smart1rv-chip { background:#f5f8ff; border:1px solid #dce4f2; color:#28477f; font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; }
-  #smart1rv-widget .smart1rv-plan-table { width:100%; border-collapse:collapse; margin-top:6px; }
-  #smart1rv-widget .smart1rv-plan-table th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#687386; padding:8px 10px; border-bottom:2px solid #dce4f2; }
-  #smart1rv-widget .smart1rv-plan-table td { padding:12px 10px; border-bottom:1px solid #dce4f2; vertical-align:top; line-height:1.5; }
-  #smart1rv-widget .smart1rv-plan-month { font-weight:800; color:#1A2E58; white-space:nowrap; width:110px; }
-  #smart1rv-widget .smart1rv-plan-message { color:#687386; font-size:14px; margin:4px 0 8px; }
-  #smart1rv-widget .smart1rv-plan-season { display:inline-block; margin-top:4px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#28477f; }
-  #smart1rv-widget .smart1rv-plan-budget { font-weight:800; color:#1A2E58; white-space:nowrap; text-align:right; }
-  #smart1rv-widget .smart1rv-budget-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:4px 0 10px; }
-  #smart1rv-widget .smart1rv-budget-tile { background:#fff; border:1px solid #dce4f2; border-radius:12px; padding:16px; text-align:center; }
-  #smart1rv-widget .smart1rv-budget-amount { display:block; color:#1A2E58; font-size:clamp(20px,3vw,26px); font-weight:800; }
-  #smart1rv-widget .smart1rv-budget-note { color:#687386; font-size:14px; line-height:1.5; }
-
-  /* Package details expander */
-  #smart1rv-widget .smart1rv-details-toggle { background:transparent; color:#28477f; border:1px solid #dce4f2; padding:10px 16px; border-radius:10px; font-size:14px; font-weight:700; margin-top:12px; width:auto; }
-  #smart1rv-widget .smart1rv-details-toggle:hover { background:#f5f8ff; color:#1A2E58; }
-  #smart1rv-widget .smart1rv-details { margin-top:16px; padding:18px; background:#fff; border:1px solid #dce4f2; border-radius:14px; }
-  #smart1rv-widget .smart1rv-details[hidden] { display:none; }
-  #smart1rv-widget .smart1rv-details h4 { color:#1A2E58; font-size:15px; margin:16px 0 8px; }
-  #smart1rv-widget .smart1rv-details h4:first-child { margin-top:0; }
-  #smart1rv-widget .smart1rv-detail-list { margin:6px 0 4px; padding-left:20px; }
-  #smart1rv-widget .smart1rv-detail-list li { line-height:1.5; margin-bottom:6px; }
-  #smart1rv-widget .smart1rv-tier-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:8px; }
-  #smart1rv-widget .smart1rv-tier { border:1px solid #dce4f2; border-radius:12px; padding:16px; background:#fff; }
-  #smart1rv-widget .smart1rv-tier-rec { border-color:#1A2E58; box-shadow:0 0 0 2px rgba(26,46,88,.12); }
-  #smart1rv-widget .smart1rv-tier-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
-  #smart1rv-widget .smart1rv-tier-name { font-weight:800; color:#1A2E58; text-transform:uppercase; letter-spacing:.04em; font-size:13px; }
-  #smart1rv-widget .smart1rv-tier-badge { background:#1A2E58; color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; border-radius:999px; }
-  #smart1rv-widget .smart1rv-tier-price { color:#1A2E58; font-size:22px; font-weight:800; }
-  #smart1rv-widget .smart1rv-tier-price span { font-size:13px; font-weight:600; color:#687386; }
-  #smart1rv-widget .smart1rv-tier-tagline { color:#687386; font-size:13px; line-height:1.45; margin:6px 0 8px; }
-  #smart1rv-widget .smart1rv-tier .smart1rv-detail-list li { font-size:13px; margin-bottom:4px; }
-  #smart1rv-widget .smart1rv-detail-fineprint { color:#687386; font-size:12px; line-height:1.5; margin-top:12px; }
-
-  @media (max-width:680px) {
-    #smart1rv-widget .smart1rv-card { margin:0; border-radius:0; padding:24px; }
-    #smart1rv-widget .smart1rv-stat-grid { grid-template-columns:1fr; }
-    #smart1rv-widget .smart1rv-budget-grid { grid-template-columns:1fr; }
-    #smart1rv-widget .smart1rv-tier-grid { grid-template-columns:1fr; }
-    #smart1rv-widget .smart1rv-plan-month { width:auto; }
+  @media(max-width:680px){
+    #smart1rv-widget .smart1rv-card{margin:0;border-radius:0;padding:24px;}
+    #smart1rv-widget .smart1rv-stat-grid{grid-template-columns:1fr;}
+    #smart1rv-widget .smart1rv-budget-grid{grid-template-columns:1fr;}
+    #smart1rv-widget .smart1rv-tier-grid{grid-template-columns:1fr;}
   }
 </style>
 
 <script>
 (function () {
-  // Live Render service URL for smart1rv.
   const API_BASE = 'https://smart1rv.onrender.com';
-
-  const ALL_WEATHER_TRIGGERS = [
-    'First 50°–60° forecast', '60°+ forecast', '70°+ weekend', 'Sunny weekend', 'Holiday weekend forecast',
-    'Heavy rain', 'Thunderstorms', 'High wind', 'Severe storm watch',
-    '85°+ forecast', '90°+ heat', 'Heat advisory', 'Heat index 100°+',
-    'First frost', 'Freeze warning', 'Snow forecast', 'Cold snap under 45°',
-    'Tropical storm or hurricane watch', 'Snowbird season'
-  ];
-
-  const AUDIENCE_TARGETING = [
-    ['In-Market RV Buyer Data', 'households actively shopping for RVs'],
-    ['Campground & State-Park Geotargeting', 'reach campers where they camp'],
-    ['Location Look-Back Retargeting', 'recent campground / RV-park visitors']
-  ];
-
+  const LEAD_ID = (function(){try{return crypto.randomUUID();}catch(e){return 'rv-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);}})();
+  const ALL_WEATHER_TRIGGERS = ['First 50°–60° forecast','60°+ forecast','70°+ weekend','Sunny weekend','Holiday weekend forecast','Heavy rain','Thunderstorms','High wind','Severe storm watch','85°+ forecast','90°+ heat','Heat advisory','Heat index 100°+','First frost','Freeze warning','Snow forecast','Cold snap under 45°','Tropical storm or hurricane watch','Snowbird season'];
+  const AUDIENCE_TARGETING = [['In-Market RV Buyer Data','households actively shopping for RVs'],['Campground & State-Park Geotargeting','reach campers where they camp'],['Location Look-Back Retargeting','recent campground / RV-park visitors']];
   var PACKAGE_TIERS = [
-    { key: 'Starter', amount: 3500, tagline: 'Best for smaller or single-location markets testing weather-triggered demand.', includes: ['Core CTV, Streaming Radio & Targeted Display', 'Primary weather triggers for your region', 'Campground & state-park geotargeting'] },
-    { key: 'Growth', amount: 5000, tagline: 'Our most popular level — the full weather-triggered stack with strong peak-season weight.', includes: ['Everything in Starter', 'Podcasts + Location Look-Back Retargeting', 'Broader weather-trigger coverage', 'Higher share of voice in peak weeks'] },
-    { key: 'Premium', amount: 7500, tagline: 'Best for larger or multi-location dealers and competitive markets.', includes: ['Everything in Growth', 'Digital Out-of-Home (DOOH) at local bars, restaurants, gas & shopping', 'Maximum trigger coverage', 'Highest peak-season media weight'] }
+    { key:'Starter', amount:3500, tagline:'Best for smaller or single-location markets testing weather-triggered demand.', includes:['Core CTV, Streaming Radio & Targeted Display','Primary weather triggers for your region','Campground & state-park geotargeting'] },
+    { key:'Growth', amount:5000, tagline:'Our most popular level — the full weather-triggered stack with strong peak-season weight.', includes:['Everything in Starter','Podcasts + Location Look-Back Retargeting','Broader weather-trigger coverage','Higher share of voice in peak weeks'] },
+    { key:'Premium', amount:7500, tagline:'Best for larger or multi-location dealers and competitive markets.', includes:['Everything in Growth','Digital Out-of-Home (DOOH) at local bars, restaurants, gas & shopping','Maximum trigger coverage','Highest peak-season media weight'] }
   ];
+  const CAMPFIRE = '<div class="cf-scene"><svg class="cf-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">'
+    +'<ellipse class="cf-glow" cx="80" cy="118" rx="52" ry="20" fill="#F0A93B"/>'
+    +'<g><rect x="40" y="120" width="80" height="12" rx="6" fill="#7a4a24" transform="rotate(-11 80 126)"/>'
+    +'<rect x="40" y="120" width="80" height="12" rx="6" fill="#98622f" transform="rotate(11 80 126)"/></g>'
+    +'<path class="cf-flame cf-f1" d="M80 44 C58 80,58 106,80 124 C102 106,102 80,80 44 Z" fill="#E8532B"/>'
+    +'<path class="cf-flame cf-f2" d="M80 64 C67 88,67 106,80 120 C93 106,93 88,80 64 Z" fill="#F5A623"/>'
+    +'<path class="cf-flame cf-f3" d="M80 82 C73 96,73 108,80 118 C87 108,87 96,80 82 Z" fill="#FFD65A"/>'
+    +'<circle class="cf-spark cf-s1" cx="66" cy="86" r="2.4"/><circle class="cf-spark cf-s2" cx="94" cy="80" r="2"/>'
+    +'<circle class="cf-spark cf-s3" cx="80" cy="74" r="2.6"/><circle class="cf-spark cf-s4" cx="72" cy="92" r="1.8"/>'
+    +'</svg><p class="cf-text">Calculating Marketing Conditions<span class="cf-dots"></span></p>'
+    +'<p class="cf-sub">Reading your market, weather patterns &amp; campground data…</p></div>';
 
-  const widget = document.getElementById('smart1rv-widget');
-  const form = document.getElementById('smart1rvForm');
-  const steps = Array.from(widget.querySelectorAll('.smart1rv-step'));
-  const progressBar = document.getElementById('smart1rvProgressBar');
-  const buildButton = document.getElementById('smart1rvBuildEstimate');
-  const downloadButton = document.getElementById('smart1rvDownload');
-  const estimateBox = document.getElementById('smart1rvEstimateBox');
-  const proposalRecipient = document.getElementById('smart1rvProposalRecipient');
-  const altWrap = document.getElementById('smart1rvAlternateEmailWrap');
-  const altEmail = document.getElementById('smart1rvAlternateEmail');
-  const submitStatus = document.getElementById('smart1rvSubmitStatus');
-  const submitButton = document.getElementById('smart1rvSubmitButton');
-  const pillError = document.getElementById('smart1rvPillError');
+  const widget=document.getElementById('smart1rv-widget');
+  const form=document.getElementById('smart1rvForm');
+  const steps=Array.from(widget.querySelectorAll('.smart1rv-step'));
+  const progressBar=document.getElementById('smart1rvProgressBar');
+  const buildButton=document.getElementById('smart1rvBuildEstimate');
+  const estimateBox=document.getElementById('smart1rvEstimateBox');
+  const unlockPanel=document.getElementById('smart1rvUnlock');
+  const unlockBtn=document.getElementById('smart1rvUnlockBtn');
+  const unlockErr=document.getElementById('s1uErr');
+  const resultActions=document.getElementById('smart1rvResultActions');
+  const downloadButton=document.getElementById('smart1rvDownload');
+  const pillError=document.getElementById('smart1rvPillError');
+  let currentStep=1, estimateData=null, proposalPdfUrl='';
 
-  let currentStep = 1;
-  let estimateData = null;
-  let submitCompleted = false;
+  function showStep(step,scroll){currentStep=Math.max(1,Math.min(step,steps.length));steps.forEach(s=>{s.style.display=Number(s.getAttribute('data-step'))===currentStep?'block':'none';});progressBar.style.width=Math.min((currentStep/steps.length)*100,100)+'%';if(scroll!==false){try{widget.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}}}
+  widget.querySelectorAll('.smart1rv-pillgroup').forEach(function(group){const hidden=widget.querySelector('input[name="'+group.getAttribute('data-name')+'"]');group.querySelectorAll('.smart1rv-pill').forEach(function(pill){pill.addEventListener('click',function(){group.querySelectorAll('.smart1rv-pill').forEach(p=>p.classList.remove('is-selected'));pill.classList.add('is-selected');if(hidden)hidden.value=pill.getAttribute('data-value');if(pillError)pillError.hidden=true;});});});
+  function validatePillGroups(a){let ok=true;a.querySelectorAll('.smart1rv-pillgroup[data-required="true"]').forEach(function(g){const h=widget.querySelector('input[name="'+g.getAttribute('data-name')+'"]');if(!h||!h.value)ok=false;});if(!ok&&pillError)pillError.hidden=false;return ok;}
+  function validateCurrentStep(){const a=widget.querySelector('.smart1rv-step[data-step="'+currentStep+'"]');const req=a.querySelectorAll('input[required], select[required], textarea[required]');for(const f of req){if(f.type!=='hidden'&&!f.value){f.reportValidity();return false;}}if(!validatePillGroups(a))return false;return true;}
+  function getPayload(extra){const data=new FormData(form);const p=Object.fromEntries(data.entries());p.weather_triggers=ALL_WEATHER_TRIGGERS.slice();p.selected_weather_triggers_text=p.weather_triggers.join(', ');p.lead_id=LEAD_ID;p.form_page_url=window.location.href;p.embed_type='smart1_suite_multipart_code_block';if(extra)Object.assign(p,extra);return p;}
+  function fmt(v){return Number(v||0).toLocaleString();}function money(v){return '$'+Number(v||0).toLocaleString('en-US');}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function chips(list){if(!Array.isArray(list)||!list.length)return '';return '<div class="smart1rv-chips">'+list.map(i=>'<span class="smart1rv-chip">'+esc(i)+'</span>').join('')+'</div>';}
+  function pkgBase(e){if(Number(e.base_monthly_budget)>0)return Number(e.base_monthly_budget);var m=String(e.recommended_package||'').replace(/,/g,'').match(/\$?\s*(\d{3,6})/);return m?Number(m[1]):5000;}
+  function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim());}
 
-  function showStep(step) {
-    currentStep = Math.max(1, Math.min(step, steps.length));
-    steps.forEach(function (section) {
-      section.style.display = Number(section.getAttribute('data-step')) === currentStep ? 'block' : 'none';
-    });
-    progressBar.style.width = Math.min((currentStep / steps.length) * 100, 100) + '%';
-    try { widget.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-  }
+  function buildPackageDetails(e){var rec=pkgBase(e);var ch=Array.isArray(e.recommended_channels)?e.recommended_channels:[];var cl=ch.length?'<ul class="smart1rv-detail-list">'+ch.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>':'';var tiers=PACKAGE_TIERS.map(function(t){var r=t.amount===rec;return '<div class="smart1rv-tier'+(r?' smart1rv-tier-rec':'')+'"><div class="smart1rv-tier-head"><span class="smart1rv-tier-name">'+esc(t.key)+'</span>'+(r?'<span class="smart1rv-tier-badge">Recommended</span>':'')+'</div><div class="smart1rv-tier-price">'+money(t.amount)+'<span>/month</span></div><p class="smart1rv-tier-tagline">'+esc(t.tagline)+'</p><ul class="smart1rv-detail-list">'+t.includes.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul></div>';}).join('');return '<button type="button" class="smart1rv-details-toggle" id="smart1rvPkgDetailsToggle" aria-expanded="false">See package details</button><div class="smart1rv-details" id="smart1rvPkgDetails" hidden><h4>What’s included in your SmartForecast</h4><p>Your monthly fund runs weather-triggered advertising across the channels we recommend for your market:</p>'+cl+'<ul class="smart1rv-detail-list"><li><strong>Data-driven audience targeting</strong> — in-market RV buyer data, campground &amp; state-park geotargeting, and location look-back retargeting.</li><li><strong>Weather-triggered activation</strong> — ads turn on when your selected weather conditions hit and pause when they don’t.</li><li><strong>Campaign management &amp; optimization</strong> — Smart 1 builds, runs, and tunes the campaigns for you.</li><li><strong>Reporting</strong> — track delivery and performance throughout the campaign.</li><li><strong>Rollover protection</strong> — unused media from poor-weather windows rolls into the next month.</li><li><strong>Off-season off-ramp</strong> — leftover peak-season budget can shift to winterization, spring prep, A/C or generator service campaigns, or carry 100% forward as credit.</li></ul><h4>Package levels</h4><div class="smart1rv-tier-grid">'+tiers+'</div><p class="smart1rv-detail-fineprint">All levels are month-to-month SmartForecast subscriptions. Your recommended level is based on your market size and estimated opportunity — you can move up or down after a strategy review.</p></div>';}
+  function wirePackageDetails(){var t=document.getElementById('smart1rvPkgDetailsToggle');var d=document.getElementById('smart1rvPkgDetails');if(!t||!d)return;t.addEventListener('click',function(){var h=d.hasAttribute('hidden');if(h){d.removeAttribute('hidden');t.textContent='Hide package details';}else{d.setAttribute('hidden','');t.textContent='See package details';}});}
 
-  // Pill selectors
-  widget.querySelectorAll('.smart1rv-pillgroup').forEach(function (group) {
-    const hidden = widget.querySelector('input[name="' + group.getAttribute('data-name') + '"]');
-    group.querySelectorAll('.smart1rv-pill').forEach(function (pill) {
-      pill.addEventListener('click', function () {
-        group.querySelectorAll('.smart1rv-pill').forEach(function (p) { p.classList.remove('is-selected'); });
-        pill.classList.add('is-selected');
-        if (hidden) hidden.value = pill.getAttribute('data-value');
-        if (pillError) pillError.hidden = true;
-      });
-    });
+  function regionHtml(e){return e.market_climate_region?'<div class="smart1rv-section smart1rv-region"><span class="smart1rv-region-badge">'+esc(e.market_climate_region)+'</span>'+(e.market_region_reason?'<p>'+esc(e.market_region_reason)+'</p>':'')+'</div>':'';}
+  function statsHtml(e){return '<div class="smart1rv-stat-grid"><div class="smart1rv-stat"><span class="smart1rv-number">'+fmt(e.campground_count_low)+'–'+fmt(e.campground_count_high)+'</span><span class="smart1rv-stat-label">campgrounds &amp; RV parks</span></div><div class="smart1rv-stat"><span class="smart1rv-number">'+fmt(e.estimated_site_count_low)+'–'+fmt(e.estimated_site_count_high)+'</span><span class="smart1rv-stat-label">estimated RV / camping sites</span></div><div class="smart1rv-stat"><span class="smart1rv-number">'+fmt(e.estimated_peak_season_reach_low)+'–'+fmt(e.estimated_peak_season_reach_high)+'</span><span class="smart1rv-stat-label">estimated peak-season camper reach</span></div></div>';}
+
+  function renderPreview(e){const d=(getPayload().dealership_name||'your dealership').trim();
+    estimateBox.innerHTML='<p class="smart1rv-report-intro">Here’s a preview of '+esc(d)+'’s weather-triggered RV demand opportunity:</p>'+regionHtml(e)+statsHtml(e)+
+      '<div class="s1u-teaser"><p class="s1u-teaser-h">🔒 Your full report also includes:</p><ul><li>Recommended package &amp; suggested monthly budget</li><li>Recommended media channels &amp; audience/data targeting</li><li>Best weather triggers for your market</li><li>A month-by-month campaign plan &amp; budget</li><li>A downloadable PDF proposal</li></ul></div>';
+    unlockPanel.style.display='block';resultActions.style.display='none';}
+
+  function renderFull(e){const d=(getPayload().dealership_name||'your dealership').trim();
+    const summary=e.dealer_summary?'<div class="smart1rv-section"><h3>Your Market Opportunity</h3><p>'+esc(e.dealer_summary)+'</p></div>':'';
+    const pkg=e.recommended_package?'<div class="smart1rv-section"><h3>Recommended Package</h3><p class="smart1rv-package-name">'+esc(e.recommended_package)+'</p>'+(e.recommended_package_reason?'<p>'+esc(e.recommended_package_reason)+'</p>':'')+buildPackageDetails(e)+'</div>':'';
+    const channels=(Array.isArray(e.recommended_channels)&&e.recommended_channels.length)?'<div class="smart1rv-section"><h3>Recommended Media Channels</h3>'+chips(e.recommended_channels)+'</div>':'';
+    const targeting='<div class="smart1rv-section"><h3>Audience &amp; Data Targeting</h3><p>Every campaign is powered by data-driven audience targeting:</p><ul class="smart1rv-detail-list">'+AUDIENCE_TARGETING.map(t=>'<li><strong>'+esc(t[0])+'</strong> — '+esc(t[1])+'</li>').join('')+'</ul></div>';
+    const triggers=(Array.isArray(e.best_weather_triggers)&&e.best_weather_triggers.length)?'<div class="smart1rv-section"><h3>Recommended Weather Triggers for Your Market</h3>'+chips(e.best_weather_triggers)+'</div>':'';
+    const budget=e.base_monthly_budget_text?'<div class="smart1rv-section"><h3>Suggested Media Budget</h3><div class="smart1rv-budget-grid"><div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">'+esc(e.base_monthly_budget_text)+'/mo</span><span class="smart1rv-stat-label">at peak demand</span></div><div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">'+esc(e.average_monthly_budget_text||'')+'/mo</span><span class="smart1rv-stat-label">blended average</span></div><div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">'+esc(e.suggested_budget_total_text||'')+'</span><span class="smart1rv-stat-label">plan total ('+esc(String(e.suggested_budget_months||''))+' months)</span></div></div>'+(e.budget_note?'<p class="smart1rv-budget-note">'+esc(e.budget_note)+'</p>':'')+'</div>':'';
+    let plan='';if(Array.isArray(e.month_by_month_plan)&&e.month_by_month_plan.length){const rows=e.month_by_month_plan.map(function(row){const s=row.season?'<div class="smart1rv-plan-season">'+esc(row.season)+'</div>':'';return '<tr><td class="smart1rv-plan-month">'+esc(row.month)+s+'</td><td><strong>'+esc(row.campaign_focus)+'</strong><div class="smart1rv-plan-message">'+esc(row.recommended_message)+'</div>'+chips(row.weather_triggers)+'</td><td class="smart1rv-plan-budget">'+esc(row.suggested_budget_text||'')+'</td></tr>';}).join('');plan='<div class="smart1rv-section"><h3>Month-by-Month Campaign Plan &amp; Budget</h3><table class="smart1rv-plan-table"><thead><tr><th>Month</th><th>Focus &amp; Triggers</th><th>Budget</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
+    const disc='<p class="smart1rv-disclaimer">'+esc(e.estimate_disclaimer||'This is a planning estimate based on geography, market density, and standard campground capacity assumptions. It is not an audited count.')+'</p>';
+    estimateBox.innerHTML='<p class="smart1rv-report-intro">Based on '+esc(d)+'’s ZIP code, selected buyer radius, and regional campground density, here’s your full weather-triggered RV demand plan:</p>'+regionHtml(e)+statsHtml(e)+summary+pkg+channels+targeting+triggers+budget+plan+disc;
+    wirePackageDetails();unlockPanel.style.display='none';resultActions.style.display='flex';}
+
+  async function postLead(extra){const r=await fetch(API_BASE+'/api/rv-demand/estimate-and-submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(getPayload(extra))});let res={};try{res=await r.json();}catch(e){throw new Error('The server did not return JSON. Check the API URL and CORS settings.');}if(!r.ok||!res.ok)throw new Error(res.detail||res.error||'Submission failed.');return res;}
+
+  function loadHtml2Pdf(){return new Promise(function(res,rej){if(window.html2pdf)return res();var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=()=>res();s.onerror=()=>rej(new Error('Could not load the PDF library.'));document.head.appendChild(s);});}
+  function safeName(n){return String(n||'RV Dealer').replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,' ').trim();}
+  async function downloadProposal(){if(!estimateData)return;const d=(getPayload().dealership_name||'RV Dealer').trim();const filename=safeName(d)+' Weather Marketing Proposal.pdf';const header=document.createElement('div');header.setAttribute('style','border-bottom:3px solid #1A2E58;padding-bottom:14px;margin-bottom:18px;');header.innerHTML='<div style="color:#1A2E58;font-size:26px;font-weight:800;">'+esc(d)+'</div><div style="color:#28477f;font-size:18px;font-weight:700;margin-top:2px;">Weather Marketing Proposal</div><div style="color:#687386;font-size:13px;margin-top:6px;">Prepared by Smart 1 Marketing &middot; '+new Date().toLocaleDateString()+'</div>';estimateBox.insertBefore(header,estimateBox.firstChild);var tgl=document.getElementById('smart1rvPkgDetailsToggle');var td=tgl?tgl.style.display:null;if(tgl)tgl.style.display='none';var pb=estimateBox.style.background;estimateBox.style.background='#fff';var orig=downloadButton?downloadButton.textContent:'';if(downloadButton){downloadButton.disabled=true;downloadButton.textContent='Preparing PDF…';}try{await loadHtml2Pdf();await window.html2pdf().set({margin:[10,10,12,10],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(estimateBox).save();}catch(err){alert('Sorry — the PDF could not be generated. '+err.message);}finally{if(header.parentNode)header.parentNode.removeChild(header);if(tgl)tgl.style.display=td||'';estimateBox.style.background=pb;if(downloadButton){downloadButton.disabled=false;downloadButton.textContent=orig;}}}
+
+  widget.querySelectorAll('.smart1rv-next').forEach(b=>b.addEventListener('click',function(){if(!validateCurrentStep())return;showStep(currentStep+1);}));
+  widget.querySelectorAll('.smart1rv-back').forEach(b=>b.addEventListener('click',function(){showStep(currentStep-1);}));
+  if(downloadButton)downloadButton.addEventListener('click',downloadProposal);
+
+  buildButton.addEventListener('click',async function(){if(!validateCurrentStep())return;showStep(3);unlockPanel.style.display='none';resultActions.style.display='none';estimateBox.innerHTML=CAMPFIRE;buildButton.disabled=true;
+    try{
+      const res=await postLead({lead_stage:'Preview — email not yet provided'});
+      estimateData=res.estimate||res.data||res;proposalPdfUrl=res.proposal_pdf_url||'';
+      renderPreview(estimateData);
+    }catch(err){estimateBox.innerHTML='<p>We could not complete the automated estimate right now.</p><p><strong>Error:</strong> '+esc(err.message)+'</p>';console.error(err);}
+    finally{buildButton.disabled=false;}
   });
 
-  function validatePillGroups(activeStep) {
-    let ok = true;
-    activeStep.querySelectorAll('.smart1rv-pillgroup[data-required="true"]').forEach(function (group) {
-      const hidden = widget.querySelector('input[name="' + group.getAttribute('data-name') + '"]');
-      if (!hidden || !hidden.value) ok = false;
-    });
-    if (!ok && pillError) pillError.hidden = false;
-    return ok;
-  }
-
-  function validateCurrentStep() {
-    const activeStep = widget.querySelector('.smart1rv-step[data-step="' + currentStep + '"]');
-    const requiredFields = activeStep.querySelectorAll('input[required], select[required], textarea[required]');
-    for (const field of requiredFields) {
-      if (field.type !== 'hidden' && !field.value) {
-        field.reportValidity();
-        return false;
-      }
-    }
-    if (!validatePillGroups(activeStep)) return false;
-    return true;
-  }
-
-  function getPayload() {
-    const data = new FormData(form);
-    const payload = Object.fromEntries(data.entries());
-    payload.weather_triggers = ALL_WEATHER_TRIGGERS.slice();
-    payload.selected_weather_triggers_text = payload.weather_triggers.join(', ');
-    payload.proposal_recipient_email = payload.proposal_recipient === 'other' && payload.alternate_email ? payload.alternate_email : payload.email;
-    payload.form_page_url = window.location.href;
-    payload.embed_type = 'smart1_suite_multipart_code_block';
-    return payload;
-  }
-
-  function formatNumber(value) { return Number(value || 0).toLocaleString(); }
-  function money(value) { return '$' + Number(value || 0).toLocaleString('en-US'); }
-  function escapeHtml(value) {
-    return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-  function chips(list) {
-    if (!Array.isArray(list) || list.length === 0) return '';
-    return '<div class="smart1rv-chips">' + list.map(function (item) { return '<span class="smart1rv-chip">' + escapeHtml(item) + '</span>'; }).join('') + '</div>';
-  }
-
-  function packageBaseAmount(estimate) {
-    if (Number(estimate.base_monthly_budget) > 0) return Number(estimate.base_monthly_budget);
-    var m = String(estimate.recommended_package || '').replace(/,/g, '').match(/\$?\s*(\d{3,6})/);
-    return m ? Number(m[1]) : 5000;
-  }
-
-  function buildPackageDetails(estimate) {
-    var rec = packageBaseAmount(estimate);
-    var channels = Array.isArray(estimate.recommended_channels) ? estimate.recommended_channels : [];
-    var channelList = channels.length ? '<ul class="smart1rv-detail-list">' + channels.map(function (c) { return '<li>' + escapeHtml(c) + '</li>'; }).join('') + '</ul>' : '';
-    var tiers = PACKAGE_TIERS.map(function (t) {
-      var isRec = t.amount === rec;
-      return '<div class="smart1rv-tier' + (isRec ? ' smart1rv-tier-rec' : '') + '">' +
-        '<div class="smart1rv-tier-head"><span class="smart1rv-tier-name">' + escapeHtml(t.key) + '</span>' +
-        (isRec ? '<span class="smart1rv-tier-badge">Recommended</span>' : '') + '</div>' +
-        '<div class="smart1rv-tier-price">' + money(t.amount) + '<span>/month</span></div>' +
-        '<p class="smart1rv-tier-tagline">' + escapeHtml(t.tagline) + '</p>' +
-        '<ul class="smart1rv-detail-list">' + t.includes.map(function (i) { return '<li>' + escapeHtml(i) + '</li>'; }).join('') + '</ul>' +
-      '</div>';
-    }).join('');
-    return '<button type="button" class="smart1rv-details-toggle" id="smart1rvPkgDetailsToggle" aria-expanded="false" aria-controls="smart1rvPkgDetails">See package details</button>' +
-      '<div class="smart1rv-details" id="smart1rvPkgDetails" hidden>' +
-        '<h4>What’s included in your Climate Safeguard Fund</h4>' +
-        '<p>Your monthly fund runs weather-triggered advertising across the channels we recommend for your market:</p>' +
-        channelList +
-        '<ul class="smart1rv-detail-list">' +
-          '<li><strong>Data-driven audience targeting</strong> — in-market RV buyer data, campground &amp; state-park geotargeting, and location look-back retargeting.</li>' +
-          '<li><strong>Weather-triggered activation</strong> — ads turn on when your selected weather conditions hit and pause when they don’t.</li>' +
-          '<li><strong>Campaign management &amp; optimization</strong> — Smart 1 builds, runs, and tunes the campaigns for you.</li>' +
-          '<li><strong>Reporting</strong> — track delivery and performance throughout the campaign.</li>' +
-          '<li><strong>Rollover protection</strong> — unused media from poor-weather windows rolls into the next month.</li>' +
-          '<li><strong>Off-season off-ramp</strong> — leftover peak-season budget can shift to winterization, spring prep, A/C or generator service campaigns, or carry 100% forward as credit.</li>' +
-        '</ul>' +
-        '<h4>Package levels</h4>' +
-        '<div class="smart1rv-tier-grid">' + tiers + '</div>' +
-        '<p class="smart1rv-detail-fineprint">All levels are month-to-month Climate Safeguard Fund subscriptions. Your recommended level is based on your market size and estimated opportunity — you can move up or down after a strategy review.</p>' +
-      '</div>';
-  }
-
-  function wirePackageDetails() {
-    var toggle = document.getElementById('smart1rvPkgDetailsToggle');
-    var details = document.getElementById('smart1rvPkgDetails');
-    if (!toggle || !details) return;
-    toggle.addEventListener('click', function () {
-      var isHidden = details.hasAttribute('hidden');
-      if (isHidden) { details.removeAttribute('hidden'); toggle.setAttribute('aria-expanded', 'true'); toggle.textContent = 'Hide package details'; }
-      else { details.setAttribute('hidden', ''); toggle.setAttribute('aria-expanded', 'false'); toggle.textContent = 'See package details'; }
-    });
-  }
-
-  function buildReportHtml(estimate) {
-    const dealership = (getPayload().dealership_name || 'your dealership').trim();
-
-    const region = estimate.market_climate_region
-      ? '<div class="smart1rv-section smart1rv-region"><span class="smart1rv-region-badge">' + escapeHtml(estimate.market_climate_region) + '</span>' +
-          (estimate.market_region_reason ? '<p>' + escapeHtml(estimate.market_region_reason) + '</p>' : '') + '</div>'
-      : '';
-
-    const stats =
-      '<div class="smart1rv-stat-grid">' +
-        '<div class="smart1rv-stat"><span class="smart1rv-number">' + formatNumber(estimate.campground_count_low) + '–' + formatNumber(estimate.campground_count_high) + '</span><span class="smart1rv-stat-label">campgrounds &amp; RV parks</span></div>' +
-        '<div class="smart1rv-stat"><span class="smart1rv-number">' + formatNumber(estimate.estimated_site_count_low) + '–' + formatNumber(estimate.estimated_site_count_high) + '</span><span class="smart1rv-stat-label">estimated RV / camping sites</span></div>' +
-        '<div class="smart1rv-stat"><span class="smart1rv-number">' + formatNumber(estimate.estimated_peak_season_reach_low) + '–' + formatNumber(estimate.estimated_peak_season_reach_high) + '</span><span class="smart1rv-stat-label">estimated peak-season camper reach</span></div>' +
-      '</div>';
-
-    const summary = estimate.dealer_summary ? '<div class="smart1rv-section"><h3>Your Market Opportunity</h3><p>' + escapeHtml(estimate.dealer_summary) + '</p></div>' : '';
-
-    const pkg = estimate.recommended_package
-      ? '<div class="smart1rv-section"><h3>Recommended Package</h3><p class="smart1rv-package-name">' + escapeHtml(estimate.recommended_package) + '</p>' +
-          (estimate.recommended_package_reason ? '<p>' + escapeHtml(estimate.recommended_package_reason) + '</p>' : '') + buildPackageDetails(estimate) + '</div>'
-      : '';
-
-    const channels = (Array.isArray(estimate.recommended_channels) && estimate.recommended_channels.length)
-      ? '<div class="smart1rv-section"><h3>Recommended Media Channels</h3>' + chips(estimate.recommended_channels) + '</div>' : '';
-
-    const targeting = '<div class="smart1rv-section"><h3>Audience &amp; Data Targeting</h3>' +
-      '<p>Every campaign is powered by data-driven audience targeting:</p>' +
-      '<ul class="smart1rv-detail-list">' +
-      AUDIENCE_TARGETING.map(function (t) { return '<li><strong>' + escapeHtml(t[0]) + '</strong> — ' + escapeHtml(t[1]) + '</li>'; }).join('') +
-      '</ul></div>';
-
-    const triggers = (Array.isArray(estimate.best_weather_triggers) && estimate.best_weather_triggers.length)
-      ? '<div class="smart1rv-section"><h3>Recommended Weather Triggers for Your Market</h3>' + chips(estimate.best_weather_triggers) + '</div>' : '';
-
-    const budget = estimate.base_monthly_budget_text
-      ? '<div class="smart1rv-section"><h3>Suggested Media Budget</h3>' +
-          '<div class="smart1rv-budget-grid">' +
-            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.base_monthly_budget_text) + '/mo</span><span class="smart1rv-stat-label">at peak demand</span></div>' +
-            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.average_monthly_budget_text || '') + '/mo</span><span class="smart1rv-stat-label">blended average</span></div>' +
-            '<div class="smart1rv-budget-tile"><span class="smart1rv-budget-amount">' + escapeHtml(estimate.suggested_budget_total_text || '') + '</span><span class="smart1rv-stat-label">plan total (' + escapeHtml(String(estimate.suggested_budget_months || '')) + ' months)</span></div>' +
-          '</div>' +
-          (estimate.budget_note ? '<p class="smart1rv-budget-note">' + escapeHtml(estimate.budget_note) + '</p>' : '') + '</div>'
-      : '';
-
-    let plan = '';
-    if (Array.isArray(estimate.month_by_month_plan) && estimate.month_by_month_plan.length) {
-      const rows = estimate.month_by_month_plan.map(function (row) {
-        const season = row.season ? '<div class="smart1rv-plan-season">' + escapeHtml(row.season) + '</div>' : '';
-        return '<tr><td class="smart1rv-plan-month">' + escapeHtml(row.month) + season + '</td>' +
-          '<td><strong>' + escapeHtml(row.campaign_focus) + '</strong><div class="smart1rv-plan-message">' + escapeHtml(row.recommended_message) + '</div>' + chips(row.weather_triggers) + '</td>' +
-          '<td class="smart1rv-plan-budget">' + escapeHtml(row.suggested_budget_text || '') + '</td></tr>';
-      }).join('');
-      plan = '<div class="smart1rv-section"><h3>Month-by-Month Campaign Plan &amp; Budget</h3>' +
-        '<table class="smart1rv-plan-table"><thead><tr><th>Month</th><th>Focus &amp; Triggers</th><th>Budget</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    }
-
-    const disclaimer = '<p class="smart1rv-disclaimer">' + escapeHtml(estimate.estimate_disclaimer || 'This is a planning estimate based on geography, market density, and standard campground capacity assumptions. It is not an audited count.') + '</p>';
-
-    return '<p class="smart1rv-report-intro">Based on ' + escapeHtml(dealership) + '’s ZIP code, selected buyer radius, and regional campground density, here’s your weather-triggered RV demand opportunity:</p>' +
-      region + stats + summary + pkg + channels + targeting + triggers + budget + plan + disclaimer;
-  }
-
-  function renderEstimate(estimate) {
-    estimateBox.innerHTML = buildReportHtml(estimate);
-    wirePackageDetails();
-    if (downloadButton) downloadButton.style.display = 'inline-block';
-  }
-
-  async function estimateAndSubmit() {
-    if (!API_BASE || API_BASE.indexOf('YOUR-RENDER-APP') !== -1 || API_BASE.indexOf('http') !== 0) {
-      throw new Error('Render URL has not been configured. Set API_BASE to your Render service URL, e.g. https://smart1rv.onrender.com.');
-    }
-    const response = await fetch(API_BASE + '/api/rv-demand/estimate-and-submit', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getPayload())
-    });
-    let result = {};
-    try { result = await response.json(); }
-    catch (e) { throw new Error('The server did not return JSON. Check Render logs and CORS settings.'); }
-    if (!response.ok || !result.ok) { throw new Error(result.detail || result.error || 'Submission failed.'); }
-    return result;
-  }
-
-  // PDF download
-  function loadHtml2Pdf() {
-    return new Promise(function (resolve, reject) {
-      if (window.html2pdf) return resolve();
-      var s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      s.onload = function () { resolve(); };
-      s.onerror = function () { reject(new Error('Could not load the PDF library.')); };
-      document.head.appendChild(s);
-    });
-  }
-  function safeFileName(name) {
-    return String(name || 'RV Dealer').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim();
-  }
-  async function downloadProposal() {
-    if (!estimateData) return;
-    const dealership = (getPayload().dealership_name || 'RV Dealer').trim();
-    const filename = safeFileName(dealership) + ' Weather Marketing Proposal.pdf';
-
-    // Generate from the on-screen report (reliable) rather than an off-screen clone.
-    const header = document.createElement('div');
-    header.setAttribute('style', 'border-bottom:3px solid #1A2E58;padding-bottom:14px;margin-bottom:18px;');
-    header.innerHTML =
-      '<div style="color:#1A2E58;font-size:26px;font-weight:800;">' + escapeHtml(dealership) + '</div>' +
-      '<div style="color:#28477f;font-size:18px;font-weight:700;margin-top:2px;">Weather Marketing Proposal</div>' +
-      '<div style="color:#687386;font-size:13px;margin-top:6px;">Prepared by Smart 1 Marketing &middot; ' + new Date().toLocaleDateString() + '</div>';
-    estimateBox.insertBefore(header, estimateBox.firstChild);
-
-    var toggle = document.getElementById('smart1rvPkgDetailsToggle');
-    var toggleDisplay = toggle ? toggle.style.display : null;
-    if (toggle) toggle.style.display = 'none';
-    var prevBg = estimateBox.style.background;
-    estimateBox.style.background = '#fff';
-
-    var original = downloadButton ? downloadButton.textContent : '';
-    if (downloadButton) { downloadButton.disabled = true; downloadButton.textContent = 'Preparing PDF…'; }
-    try {
-      await loadHtml2Pdf();
-      await window.html2pdf().set({
-        margin: [10, 10, 12, 10], filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      }).from(estimateBox).save();
-    } catch (err) {
-      alert('Sorry — the PDF could not be generated. ' + err.message);
-    } finally {
-      if (header.parentNode) header.parentNode.removeChild(header);
-      if (toggle) toggle.style.display = toggleDisplay || '';
-      estimateBox.style.background = prevBg;
-      if (downloadButton) { downloadButton.disabled = false; downloadButton.textContent = original; }
-    }
-  }
-
-  widget.querySelectorAll('.smart1rv-next').forEach(function (button) {
-    button.addEventListener('click', function () { if (!validateCurrentStep()) return; showStep(currentStep + 1); });
-  });
-  widget.querySelectorAll('.smart1rv-back').forEach(function (button) {
-    button.addEventListener('click', function () { showStep(currentStep - 1); });
-  });
-  if (downloadButton) downloadButton.addEventListener('click', downloadProposal);
-
-  proposalRecipient.addEventListener('change', function () {
-    const showAlt = proposalRecipient.value === 'other';
-    altWrap.style.display = showAlt ? 'block' : 'none';
-    altEmail.required = showAlt;
+  unlockBtn.addEventListener('click',async function(){
+    const emailEl=document.getElementById('s1uEmail');
+    if(!validEmail(emailEl.value)){unlockErr.hidden=false;emailEl.focus();return;}
+    unlockErr.hidden=true;
+    renderFull(estimateData);
+    unlockBtn.disabled=true;
+    try{ await postLead({lead_stage:'Full Report Unlocked', reuse_estimate:estimateData, reuse_pdf_url:proposalPdfUrl}); }
+    catch(err){ console.error('Enrich failed:',err); }
+    finally{ unlockBtn.disabled=false; }
   });
 
-  buildButton.addEventListener('click', async function () {
-    if (!validateCurrentStep()) return;
-    showStep(3);
-    buildButton.disabled = true;
-    estimateBox.innerHTML = '<p>Calculating Marketing Conditions.</p>';
-    try {
-      const result = await estimateAndSubmit();
-      estimateData = result.estimate || result.data || result;
-      submitCompleted = true;
-      renderEstimate(estimateData);
-    } catch (error) {
-      estimateBox.innerHTML = '<p>We could not complete the automated estimate right now.</p><p><strong>Error:</strong> ' + escapeHtml(error.message) + '</p>';
-      console.error(error);
-    } finally {
-      buildButton.disabled = false;
-    }
-  });
-
-  form.addEventListener('submit', async function (event) {
-    event.preventDefault();
-    if (!validateCurrentStep()) return;
-    if (submitCompleted) {
-      submitStatus.textContent = 'Your request has been submitted. Smart 1 Suite will handle the proposal document and follow-up email.';
-      submitButton.disabled = true;
-      return;
-    }
-    try {
-      submitStatus.textContent = 'Submitting your request...';
-      submitButton.disabled = true;
-      const result = await estimateAndSubmit();
-      estimateData = result.estimate || result.data || result;
-      submitCompleted = true;
-      submitStatus.textContent = 'Your request has been submitted. Smart 1 Suite will handle the proposal document and follow-up email.';
-    } catch (error) {
-      submitButton.disabled = false;
-      submitStatus.textContent = 'Submission failed: ' + error.message;
-    }
-  });
-
-  showStep(1);
+  showStep(1,false);
 })();
 </script>
