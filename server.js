@@ -356,8 +356,17 @@ async function sendToSmart1Suite(payload) {
   return { status: response.status, body: text };
 }
 
+// Bump this whenever you deploy so /health confirms the running build.
+const BUILD = '2026-07-21-progressive-smartforecast';
+
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'smart1rv', timestamp: new Date().toISOString() });
+  res.json({
+    ok: true,
+    service: 'smart1rv',
+    build: BUILD,
+    features: { progressive_capture: true, placeholder_email: PLACEHOLDER_EMAIL, requires_email_to_build: false },
+    timestamp: new Date().toISOString()
+  });
 });
 
 const PLACEHOLDER_EMAIL = process.env.PLACEHOLDER_LEAD_EMAIL || 'rvdealer@smart1marketing.com';
